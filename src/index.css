@@ -1,0 +1,277 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   顾客端「工单」页（Customer Workorder）· 自包含样式底座
+   ----------------------------------------------------------------------------
+   全部内容逐段摘自主工程 C:\Users\Public\wb-p0-ws\src\index.css，取值未做任何修改。
+   每段上方标注原文件行号，便于回溯与审计。
+
+   刻意剔除（本屏不需要 / 会污染观感）：
+     · .merchant-workspace-readable 系列
+     · @media print 热敏小票段
+     · material-symbols 图标字体段（本屏用 lucide-react）
+     · --color-deck-* / --color-rad-* / --color-console-* 色板
+     · design-tokens 目录下的三份 @import（主工程独有文件，未随包拷贝）
+   ============================================================================ */
+
+/* ---- [源 L258-336] INDUSTRIAL PRECISION CONSOLE 权威令牌集 ---------------- */
+@theme {
+  /* ---- 三端断点（mobile <768 / tablet 768–1279 / desktop ≥1280）---- */
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1280px;
+
+  /* ---- Canvas & Surfaces ---- */
+  --color-page-bg: #F4F4F2;
+  --color-card-bg: #FFFFFF;
+
+  /* ---- Structural Identity（导航脊 / 主头部 / 高优先卡片）---- */
+  --color-dark-container: #111111;
+  --color-dark-container-hover: #000000;
+  --color-dark-container-border: #333333;
+
+  /* ---- Borders & Structural Rules ---- */
+  --color-border-main: #E5E5E5;
+  --color-border-subtle: #E5E5E5;
+
+  /* ---- Text & Hierarchy ---- */
+  --color-text-prominent: #000000;
+  --color-text-secondary: #303030;
+  --color-text-body: #545454;
+  --color-text-muted: #888888;
+  --color-text-light-mono: #9C9C9C;
+
+  /* ---- Functional Semantics ---- */
+  --color-status-olive: #1C834F;
+  --color-status-olive-bg: rgba(28, 131, 79, 0.10);
+  --color-status-olive-border: rgba(28, 131, 79, 0.28);
+
+  --color-status-terracotta: #D98F0B;
+  --color-status-terracotta-bg: rgba(170, 90, 50, 0.08);
+  --color-status-terracotta-border: rgba(170, 90, 50, 0.25);
+
+  --color-slate-blue: #555555;
+  --color-slate-blue-bg: rgba(85, 85, 85, 0.08);
+  --color-slate-blue-border: rgba(85, 85, 85, 0.22);
+
+  --color-accent-orange: #F97316;
+  --color-accent-orange-bg: rgba(249, 115, 22, 0.12);
+
+  /* ---- Micro Radius Scale（工业级微圆角；胶囊几何仅限状态点）---- */
+  --radius-console: 4px;
+  --radius-console-lg: 6px;
+  --radius-console-xl: 8px;
+  --radius-console-pill: 9999px;
+
+  /* ---- Elevation & Depth（结构化边界优先，禁止柔和云影）---- */
+  --shadow-console-1: 0 2px 4px rgba(17, 17, 17, 0.06);
+  --shadow-console-2: 0 8px 16px rgba(17, 17, 17, 0.10);
+  --shadow-console-hud: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
+  /* ---- Signal Palette（实时信号色：LIVE / ACTIVE / CRITICAL / FOCUS）---- */
+  --color-signal-live: #10B981;
+  --color-signal-live-strong: #047857;
+  --color-signal-live-text: #059669;
+  --color-signal-live-surface: #ECFDF5;
+  --color-signal-live-border: #A7F3D0;
+  --color-signal-live-border-strong: #6EE7B7;
+
+  --color-signal-critical: #EF4444;
+  --color-signal-critical-strong: #B91C1C;
+  --color-signal-critical-text: #DC2626;
+  --color-signal-critical-surface: #FEF2F2;
+  --color-signal-critical-border: #FCA5A5;
+  --color-signal-critical-border-soft: #FECACA;
+
+  --color-signal-amber: #F59E0B;
+  --color-signal-amber-strong: #92400E;
+  --color-signal-amber-surface: #FEF08A;
+  --color-signal-amber-bg: #FEF3C7;
+
+  --color-signal-sky: #0EA5E9;
+  --color-signal-sky-strong: #0284C7;
+  --color-signal-sky-surface: #F0F9FF;
+  --color-signal-sky-border: #38BDF8;
+}
+
+/* ---- [源 L487-538] INDUSTRIAL PRECISION CONSOLE v2 · Order Summary DS ---- */
+@theme {
+  /* ---- 主操作 / 图标 ---- */
+  --color-ink: #111111;
+  --color-ink-hover: #000000;
+  --color-on-ink: #ffffff;
+  --color-icon-default: #333333;
+  --color-icon-muted: #888888;
+
+  /* ---- 状态色（仅状态语义） ---- */
+  --color-success: #1C834F;
+  --color-success-soft: #E8F5EE;
+  --color-warning: #D98F0B;
+  --color-warning-soft: #FEF3C7;
+  --color-danger: #B42318;
+  --color-danger-soft: #FEF2F2;
+
+  /* ---- 选中强调 ---- */
+  --color-select: #F97316;
+  --color-select-soft: #FFF7ED;
+  --color-select-border: #FDBA74;
+
+  /* ---- 画布 / 表面 / 描边 ---- */
+  --color-canvas: #FFFFFF;
+  --color-canvas-gray: #F1F1F1;
+  --color-hairline: #E5E5E5;
+
+  /* ---- [源 L143-144 DEPRECATED 块] 本屏仍在用的两条别名 ----
+     text-obsidian(16 处) / bg-surface-card(4 处) 在原工程走的是这组旧键，
+     值与 --color-ink / --color-canvas 同源，保留旧键名以免逐字搬迁的类名失效。 */
+  --color-obsidian: #111111;
+  --color-surface-card: #ffffff;
+
+  /* ---- 文本 ---- */
+  --color-ink-text: #111111;
+  --color-ink-text-secondary: #555555;
+  --color-ink-text-tertiary: #888888;
+
+  /* ---- 形状与尺寸（DESIGN.md Spacing & Layout） ---- */
+  --radius-ds-sm: 2px;
+  --radius-ds: 4px;
+  --radius-ds-md: 6px;
+  --radius-ds-lg: 8px;
+  --radius-ds-xl: 12px;
+  --radius-ds-2xl: 16px;
+  --radius-ds-pill: 9999px;
+  --spacing-gutter-ds: 16px;
+  --spacing-section-ds: 12px;
+  --spacing-card-ds: 12px;
+  --spacing-row-ds: 8px;
+  --height-action: 44px;
+  --height-tag: 28px;
+
+  /* ---- 字体（金额专享 Space Grotesk；普通文本系统无衬线） ---- */
+  --font-text: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-amount: 'Space Grotesk', -apple-system, sans-serif;
+  --font-price: 'Space Grotesk', -apple-system, sans-serif;
+  --font-mono: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* ---- [源 L541-552] 全局金额统一类 ---- */
+.amount-text,
+.font-amount,
+.font-price,
+.price-text,
+.price-tag,
+.price-value,
+.currency-amount,
+.font-price-grotesk,
+[data-amount="true"] {
+  font-family: 'Space Grotesk', -apple-system, sans-serif !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- [源 L845-847] 微圆角工具类 ---- */
+.rounded-custom {
+  border-radius: 4px;
+}
+
+/* ---- [源 L935-941] 局部隐藏滚动条 ---- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---- [源 L981-1002] 基础层：底色 / 字距 / 字体栈 ---- */
+@layer base {
+  :root {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior-y: none;
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  }
+  body {
+    background-color: #f9f9f7;
+    color: #1a1c1b;
+    min-height: 100vh;
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+  }
+  input, button, select, textarea {
+    font-family: inherit;
+  }
+}
+
+/* ---- [源 L1045-1071] 全局隐藏滚动条（观感依赖，必须保留） ---- */
+* {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.hide-scrollbar,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ---- [源 L1511-1517] 脉冲状态点 ---- */
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.7; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ---- [源 L1773-1798] 卡片入场上浮（hidden-down / hidden-up / visible 三态） ---- */
+.organic-card-reveal {
+  transform-origin: left center !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.organic-card-reveal[data-reveal="hidden-down"] {
+  opacity: 0.35 !important;
+  transform: translate3d(-6px, 8px, 0) scale(0.985) !important;
+  transition: none !important;
+}
+
+.organic-card-reveal[data-reveal="hidden-up"] {
+  opacity: 0.35 !important;
+  transform: translate3d(-6px, -8px, 0) scale(0.985) !important;
+  transition: none !important;
+}
+
+.organic-card-reveal[data-reveal="visible"] {
+  opacity: 1 !important;
+  transform: translate3d(0, 0, 0) scale(1) !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease-out !important;
+}
+
+/* ---- [源 L2488-2494] Motion 令牌：duration-normal 等（本屏 duration-normal 4 处） ----
+   Tailwind v4 下 --transition-duration-* / --ease-* 会生成 duration-* / ease-* 工具类。 */
+@theme {
+  --transition-duration-fast: 150ms;
+  --transition-duration-normal: 200ms;
+  --transition-duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+}
+
