@@ -18,10 +18,15 @@ import {
   Layers,
   X,
   ShoppingBag,
-  Zap
+  Zap,
+  Orbit,
+  Sparkles,
+  Tag,
+  CornerDownLeft
 } from 'lucide-react';
 import { useToast } from '../ui/ToastProvider';
 import { HorizontalStepsScroller } from './HorizontalStepsScroller';
+import { CarouselStepsScroller } from './CarouselStepsScroller';
 import { RealTimeOrderCard } from './RealTimeOrderCard';
 import { getOrderStatusConfig } from '../data/statusConfig';
 import { MOCK_ORDERS, MOCK_DELIVERED_ORDERS, MOCK_HISTORY_ORDERS, fetchOrdersFromCloudFunction } from '../data/orders';
@@ -39,6 +44,38 @@ const DEFAULT_USER_PROFILE: UserProfile = {
   uid: 'tcb_u_88201948',
   nickname: '黑曜石先锋食客 #3F0EE6',
   phone: ''
+};
+
+interface AutoSuggestItem {
+  id: string;
+  type: 'order' | 'dish' | 'customer' | 'code' | 'tag';
+  title: string;
+  subtitle?: string;
+  badge?: {
+    text: string;
+    className: string;
+  };
+  fillValue: string;
+  order?: Order;
+}
+
+const renderHighlighted = (text: string, query: string) => {
+  if (!query || !query.trim()) return text;
+  const q = query.trim();
+  const index = text.toLowerCase().indexOf(q.toLowerCase());
+  if (index === -1) return text;
+  const before = text.slice(0, index);
+  const match = text.slice(index, index + q.length);
+  const after = text.slice(index + q.length);
+  return (
+    <>
+      {before}
+      <span className="text-[#3F0EE6] bg-indigo-50 font-bold px-0.5 rounded">
+        {match}
+      </span>
+      {after}
+    </>
+  );
 };
 
 export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
@@ -67,6 +104,34 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
       return 'all';
     }
   });
+
+  // 履约时序流转视图模式 (旋转木马 / 经典横滑，对应截图切换需求)
+  const [timelineMode, setTimelineMode] = useState<'carousel' | 'horizontal'>(() => {
+    try {
+      const saved = localStorage.getItem('urban_radar_timeline_mode');
+      if (saved === 'carousel' || saved === 'horizontal') return saved;
+      return 'carousel';
+    } catch {
+      return 'carousel';
+    }
+  });
+
+  const handleToggleTimelineMode = () => {
+    setTimelineMode((prev) => {
+      const next = prev === 'carousel' ? 'horizontal' : 'carousel';
+      try {
+        localStorage.setItem('urban_radar_timeline_mode', next);
+      } catch (e) {
+        console.warn(e);
+      }
+      toast.success(
+        next === 'carousel'
+          ? '已切换为「旋转木马」履约时序视图'
+          : '已切换为「经典横滑」履约时序视图'
+      );
+      return next;
+    });
+  };
 
   const [isDrawerDropdownOpen, setIsDrawerDropdownOpen] = useState<boolean>(false);
   const drawerDropdownRef = useRef<HTMLDivElement>(null);
@@ -156,6 +221,206 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
   const [uidScope, setUidScope] = useState<'my_uid' | 'all'>('my_uid');
   const [uidSearchPrefix, setUidSearchPrefix] = useState<string>('');
 
+  // 联想输入交互状态
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const [selectedSuggestIndex, setSelectedSuggestIndex] = useState(-1);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部区域自动收起联想建议浮层
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSuggestOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // 热门搜索推荐词
+  const quickPresetTags = [
+    { label: '我的订单', value: currentUid.slice(0, 8), icon: User },
+    { label: '和牛小汉堡', value: '和牛', icon: UtensilsCrossed },
+    { label: '提拉米苏', value: '提拉米苏', icon: Sparkles },
+    { label: '8806 取餐码', value: '8806', icon: Tag },
+    { label: '01号餐车', value: '01号', icon: ShoppingBag }
+  ];
+
+  // 联想搜索建议结果计算
+  const suggestItems = useMemo<AutoSuggestItem[]>(() => {
+    const query = uidSearchPrefix.trim().toLowerCase();
+
+    // 当搜索框为空且获得焦点时，推荐当前活跃订单快速直达
+    if (!query) {
+      return orders.slice(0, 3).map((o) => {
+        const cfg = getOrderStatusConfig(o.status);
+        const dishes = o.items.map((i) => i.name).join('、');
+        return {
+          id: `recent-${o.id || o.orderNo}`,
+          type: 'order',
+          title: o.orderNo,
+          subtitle: `${dishes.slice(0, 20)}${dishes.length > 20 ? '...' : ''} · ¥${o.totalAmount}`,
+          badge: {
+            text: cfg.label,
+            className: cfg.stageGroup === 'completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-sky-700 border-sky-200'
+          },
+          fillValue: o.orderNo,
+          order: o
+        };
+      });
+    }
+
+    const results: AutoSuggestItem[] = [];
+
+    // 1. 匹配单号、取餐码、台号
+    orders.forEach((o) => {
+      const cfg = getOrderStatusConfig(o.status);
+      if (o.orderNo.toLowerCase().includes(query)) {
+        results.push({
+          id: `ord-${o.id || o.orderNo}`,
+          type: 'order',
+          title: o.orderNo,
+          subtitle: `${o.truckName} · ¥${o.totalAmount} · ${o.items.length} 件菜品`,
+          badge: {
+            text: cfg.label,
+            className: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+          },
+          fillValue: o.orderNo,
+          order: o
+        });
+      }
+      if (o.pickupCode && o.pickupCode.toLowerCase().includes(query)) {
+        results.push({
+          id: `code-${o.id || o.orderNo}`,
+          type: 'code',
+          title: `取餐码: ${o.pickupCode}`,
+          subtitle: `对应单号: ${o.orderNo} · ${o.truckName}`,
+          badge: {
+            text: '取餐凭证',
+            className: 'bg-amber-50 text-amber-700 border-amber-200'
+          },
+          fillValue: o.pickupCode,
+          order: o
+        });
+      }
+      if (o.tableCode && o.tableCode.toLowerCase().includes(query)) {
+        results.push({
+          id: `tbl-${o.id || o.orderNo}`,
+          type: 'code',
+          title: `桌号: ${o.tableCode}`,
+          subtitle: `对应单号: ${o.orderNo} (${o.tableZone || '堂食区'})`,
+          badge: {
+            text: '堂食台号',
+            className: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          },
+          fillValue: o.tableCode,
+          order: o
+        });
+      }
+    });
+
+    // 2. 匹配菜品名称
+    const seenDishes = new Set<string>();
+    orders.forEach((o) => {
+      o.items.forEach((item) => {
+        if (item.name.toLowerCase().includes(query) && !seenDishes.has(item.name)) {
+          seenDishes.add(item.name);
+          results.push({
+            id: `dish-${item.dishId || item.name}`,
+            type: 'dish',
+            title: item.name,
+            subtitle: `在订单 ${o.orderNo} 中 · ¥${item.price} · ${item.station || '后厨出品'}`,
+            badge: {
+              text: '菜品明细',
+              className: 'bg-rose-50 text-rose-700 border-rose-200'
+            },
+            fillValue: item.name,
+            order: o
+          });
+        }
+      });
+    });
+
+    // 3. 匹配食客与联系方式
+    orders.forEach((o) => {
+      if (o.customerName && o.customerName.toLowerCase().includes(query)) {
+        results.push({
+          id: `cust-${o.id}`,
+          type: 'customer',
+          title: o.customerName,
+          subtitle: `手机号: ${o.userPhone || '未填写'} · UID: ${o.userId?.slice(0, 10)}...`,
+          badge: {
+            text: '食客档案',
+            className: 'bg-purple-50 text-purple-700 border-purple-200'
+          },
+          fillValue: o.customerName,
+          order: o
+        });
+      } else if (o.userId && o.userId.toLowerCase().includes(query)) {
+        results.push({
+          id: `uid-${o.id}`,
+          type: 'customer',
+          title: o.userId,
+          subtitle: `食客: ${o.customerName || '先锋食客'} · 单号 ${o.orderNo}`,
+          badge: {
+            text: '用户 UID',
+            className: 'bg-blue-50 text-blue-700 border-blue-200'
+          },
+          fillValue: o.userId,
+          order: o
+        });
+      } else if (o.userPhone && o.userPhone.includes(query)) {
+        results.push({
+          id: `phone-${o.id}`,
+          type: 'customer',
+          title: o.userPhone,
+          subtitle: `绑定食客: ${o.customerName || '先锋食客'} · 单号 ${o.orderNo}`,
+          badge: {
+            text: '联系手机',
+            className: 'bg-teal-50 text-teal-700 border-teal-200'
+          },
+          fillValue: o.userPhone,
+          order: o
+        });
+      }
+    });
+
+    return results.slice(0, 6);
+  }, [orders, uidSearchPrefix]);
+
+  const handleSelectSuggest = (item: AutoSuggestItem) => {
+    setUidSearchPrefix(item.fillValue);
+    setIsSuggestOpen(false);
+    toast.success(`已应用联想筛选: ${item.title}`);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isSuggestOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsSuggestOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedSuggestIndex((prev) => (prev < suggestItems.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedSuggestIndex((prev) => (prev > 0 ? prev - 1 : suggestItems.length - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedSuggestIndex >= 0 && selectedSuggestIndex < suggestItems.length) {
+        handleSelectSuggest(suggestItems[selectedSuggestIndex]);
+      } else {
+        setIsSuggestOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsSuggestOpen(false);
+    }
+  };
+
   // Filter orders according to UID scope and search prefix
   const scopedOrders = useMemo(() => {
     let list = orders;
@@ -179,7 +444,12 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
           (o.userId && o.userId.toLowerCase().includes(prefix)) ||
           o.orderNo.toLowerCase().includes(prefix) ||
           (o.customerName && o.customerName.toLowerCase().includes(prefix)) ||
-          (o.userPhone && o.userPhone.includes(prefix))
+          (o.userPhone && o.userPhone.includes(prefix)) ||
+          (o.pickupCode && o.pickupCode.toLowerCase().includes(prefix)) ||
+          (o.tableCode && o.tableCode.toLowerCase().includes(prefix)) ||
+          (o.truckName && o.truckName.toLowerCase().includes(prefix)) ||
+          (o.statusText && o.statusText.toLowerCase().includes(prefix)) ||
+          (o.items && o.items.some((item) => item.name.toLowerCase().includes(prefix)))
       );
     }
 
@@ -353,9 +623,24 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
     toast.success('订单实时状态推送已开启', '已启用自动监听与状态声效提醒');
   };
 
-  // Horizontal Step Nodes Flow Component with 5 states (Read-only for client security & anti-tampering)
+  // 履约时序流转组件：支持旋转木马设计与经典横滑双布局
   const renderHorizontalSteps = (order: any, stepIndex: number) => {
-    return <HorizontalStepsScroller order={order} stepIndex={stepIndex} />;
+    if (timelineMode === 'carousel') {
+      return (
+        <CarouselStepsScroller
+          order={order}
+          stepIndex={stepIndex}
+          onToggleViewMode={handleToggleTimelineMode}
+        />
+      );
+    }
+    return (
+      <HorizontalStepsScroller
+        order={order}
+        stepIndex={stepIndex}
+        onToggleViewMode={handleToggleTimelineMode}
+      />
+    );
   };
 
   return (
@@ -386,13 +671,33 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
               <span>实时订单</span>
               <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
             </h2>
-            <p className="text-[11px] text-[#787770] font-medium mt-0.5">
-              云函数已直连 · 实时状态推送流
-            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* 履约时序流转切换按钮 (截图所指位置) */}
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleToggleTimelineMode}
+            className={`px-2.5 py-1 rounded-full border text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs ${
+              timelineMode === 'carousel'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-400/30'
+                : 'bg-white text-black border-[#e6e6e4] hover:bg-neutral-100'
+            }`}
+            title="点击切换履约时序流转视图样式（旋转木马 / 经典横滑）"
+            aria-label="切换履约时序流转视图样式"
+          >
+            <Orbit
+              className={`w-3 h-3 ${
+                timelineMode === 'carousel' ? 'text-emerald-600 animate-spin' : 'text-neutral-600'
+              }`}
+              style={{ animationDuration: '8s' }}
+            />
+            <span>{timelineMode === 'carousel' ? '木马时序' : '横滑时序'}</span>
+          </motion.button>
+
           {/* Pull from Cloud Function Button */}
           <motion.button
             type="button"
@@ -443,7 +748,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
           </div>
 
           {/* Segmented Switcher with Clean Tactile Pill Style */}
-          <div className="inline-flex items-center p-0.5 bg-[#f4f4f0] rounded-lg border border-[#e5e5e1] gap-0.5 shrink-0">
+          <div className="inline-flex items-center p-0.5 bg-[#FAF9F7] rounded-lg border border-[#e5e5e1] gap-0.5 shrink-0">
             <button
               type="button"
               onClick={() => setUidScope('my_uid')}
@@ -487,15 +792,21 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
           </div>
         </div>
 
-        {/* UID Prefix / Order Search Input with Motion Clear */}
-        <div className="relative flex items-center">
+        {/* UID Prefix / Order Search Input with Predictive Autocomplete Dropdown */}
+        <div ref={searchContainerRef} className="relative flex items-center">
           <Search className="w-3 h-3 text-[#999990] absolute left-2 pointer-events-none" />
           <input
             type="text"
             value={uidSearchPrefix}
-            onChange={(e) => setUidSearchPrefix(e.target.value)}
-            placeholder="输入 UID / 订单号 / 姓名筛选..."
-            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#fafaf8] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
+            onChange={(e) => {
+              setUidSearchPrefix(e.target.value);
+              setIsSuggestOpen(true);
+              setSelectedSuggestIndex(-1);
+            }}
+            onFocus={() => setIsSuggestOpen(true)}
+            onKeyDown={handleKeyDown}
+            placeholder="输入 UID / 订单号 / 菜品 / 取餐码联想..."
+            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#FAF9F7] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
           />
           <AnimatePresence>
             {uidSearchPrefix && (
@@ -504,36 +815,134 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 type="button"
-                onClick={() => setUidSearchPrefix('')}
+                onClick={() => {
+                  setUidSearchPrefix('');
+                  setSelectedSuggestIndex(-1);
+                }}
                 className="absolute right-1.5 text-[10px] text-neutral-400 hover:text-black p-0.5 rounded cursor-pointer"
+                title="清空输入"
               >
                 ✕
               </motion.button>
             )}
           </AnimatePresence>
+
+          {/* 联想输入下拉浮层 */}
+          <AnimatePresence>
+            {isSuggestOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.99 }}
+                transition={{ duration: 0.15 }}
+                className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-[#e2e2dd] rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-[#f0f0eb]"
+              >
+                {/* 顶栏：联想说明与状态 */}
+                <div className="px-2.5 py-1.5 bg-[#FAF9F7] flex items-center justify-between text-[10px] text-[#787770]">
+                  <div className="flex items-center gap-1 font-semibold text-[#3F0EE6]">
+                    <Sparkles className="w-3 h-3 text-[#3F0EE6]" />
+                    <span>智能联想推荐</span>
+                  </div>
+                  {uidSearchPrefix.trim() ? (
+                    <span className="tabular-nums text-[#888880]">
+                      找到 {suggestItems.length} 条建议
+                    </span>
+                  ) : (
+                    <span className="text-[#888880]">常用快捷词</span>
+                  )}
+                </div>
+
+                {/* 快捷推荐词胶囊 (输入为空时展示) */}
+                {!uidSearchPrefix.trim() && (
+                  <div className="p-2 bg-white">
+                    <div className="text-[9.5px] font-bold text-[#888880] mb-1.5 px-0.5">
+                      热门推荐
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {quickPresetTags.map((tag) => {
+                        const TagIcon = tag.icon;
+                        return (
+                          <button
+                            key={tag.label}
+                            type="button"
+                            onClick={() => {
+                              setUidSearchPrefix(tag.value);
+                              setIsSuggestOpen(false);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] bg-[#F4F4F0] hover:bg-[#e8e8e2] text-[#44443e] rounded-full font-medium transition cursor-pointer border border-[#e5e5de]"
+                          >
+                            <TagIcon className="w-2.5 h-2.5 text-[#666660]" />
+                            <span>{tag.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 联想匹配建议列表 */}
+                <div className="max-h-60 overflow-y-auto divide-y divide-[#f5f5f0] p-1">
+                  {suggestItems.length > 0 ? (
+                    suggestItems.map((item, index) => {
+                      const isSelected = selectedSuggestIndex === index;
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => handleSelectSuggest(item)}
+                          onMouseEnter={() => setSelectedSuggestIndex(index)}
+                          className={`w-full px-2 py-1.5 rounded-lg text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                            isSelected ? 'bg-indigo-50/80 border border-indigo-200/60' : 'hover:bg-[#FAF9F7]'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[11.5px] font-bold text-[#141413] truncate">
+                                {renderHighlighted(item.title, uidSearchPrefix)}
+                              </span>
+                              {item.badge && (
+                                <span
+                                  className={`text-[9px] px-1 py-0.2 rounded font-semibold border shrink-0 ${item.badge.className}`}
+                                >
+                                  {item.badge.text}
+                                </span>
+                              )}
+                            </div>
+                            {item.subtitle && (
+                              <p className="text-[10px] text-[#787770] truncate mt-0.5">
+                                {item.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 flex items-center text-[#999990]">
+                            <CornerDownLeft className="w-3 h-3 opacity-60" />
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-4 text-center text-[10.5px] text-[#999990]">
+                      未匹配到相关订单或菜品，回车可按全文检索
+                    </div>
+                  )}
+                </div>
+
+                {/* 底栏快捷操作提示 */}
+                <div className="px-2.5 py-1 bg-[#FAF9F7] flex items-center justify-between text-[9.5px] text-[#8e8d85]">
+                  <span>按 ↑↓ 切换 · 回车确认</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsSuggestOpen(false)}
+                    className="hover:text-black cursor-pointer"
+                  >
+                    收起
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
 
-      {/* Cloud Function Sync Status Banner with Micro Animation */}
-      <motion.div
-        whileHover={{ scale: 1.01 }}
-        className="my-1 px-3 py-1.5 bg-emerald-50/70 border border-emerald-200/80 rounded-none flex items-center justify-between text-xs text-emerald-950 shadow-2xs"
-      >
-        <div className="flex items-center gap-1.5">
-          <Cloud className="w-3.5 h-3.5 text-emerald-600 shrink-0 animate-pulse" />
-          <span className="text-[11px] font-bold">
-            云函数端点: <span className="tabular-nums text-emerald-800">orders / createOrder</span>
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => toast.info('链路已直连本地订单源', 'orders / createOrder · local_fallback')}
-          className="text-[10px] font-bold text-emerald-700 hover:underline cursor-pointer flex items-center gap-0.5"
-        >
-          <span>查看链路</span>
-          <ChevronRight className="w-2.5 h-2.5" />
-        </button>
-      </motion.div>
 
       {/* Tabs Row with Unified Selection State & Drawer Auto-Open Switch */}
       <div className="pt-0.5 pb-1 flex items-center justify-between gap-1.5">
@@ -599,7 +1008,8 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             onClick={() => setIsDrawerDropdownOpen((prev) => !prev)}
             aria-haspopup="true"
             aria-expanded={isDrawerDropdownOpen}
-            className={`h-7 px-2.5 rounded-full border text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs select-none group ${
+            aria-label="出餐制作抽屉视图配置"
+            className={`w-7 h-7 rounded-full border transition cursor-pointer flex items-center justify-center shadow-2xs select-none shrink-0 group ${
               isDrawerDropdownOpen
                 ? 'bg-black text-white border-black ring-2 ring-black/10'
                 : drawerExpandMode === 'all'
@@ -608,25 +1018,23 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
                 ? 'bg-[#eff6ff] border-[#bfdbfe] text-[#1d4ed8] hover:bg-[#dbeafe]'
                 : 'bg-white border-[#e5e5e0] text-[#55554f] hover:bg-[#f6f6f4] hover:text-black'
             }`}
-            title="点击展开出餐抽屉模式下拉菜单"
+            title={
+              drawerExpandMode === 'all'
+                ? '抽屉模式: 全部自动展开'
+                : drawerExpandMode === 'first'
+                ? '抽屉模式: 仅首单展开'
+                : '抽屉模式: 全部折叠'
+            }
           >
-            <UtensilsCrossed
-              className={`w-3 h-3 shrink-0 ${
+            <SlidersHorizontal
+              className={`w-3.5 h-3.5 shrink-0 ${
                 isDrawerDropdownOpen
                   ? 'text-white'
                   : drawerExpandMode === 'all'
                   ? 'text-[#ea580c]'
                   : drawerExpandMode === 'first'
                   ? 'text-[#2563eb]'
-                  : 'text-[#888882]'
-              }`}
-            />
-            <span className="whitespace-nowrap">
-              {drawerExpandMode === 'all' ? '抽屉: 全部展开' : drawerExpandMode === 'first' ? '抽屉: 仅首单' : '抽屉: 全部折叠'}
-            </span>
-            <ChevronDown
-              className={`w-3 h-3 transition-transform duration-normal ${
-                isDrawerDropdownOpen ? 'rotate-180 text-white' : 'text-[#888882] group-hover:text-black'
+                  : 'text-[#787770] group-hover:text-black'
               }`}
             />
           </button>

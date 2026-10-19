@@ -1,0 +1,6 @@
+{
+  "name": "顾客端 · 工单",
+  "description": "顾客端工单页，提供订单实时状态查看与工单管理",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

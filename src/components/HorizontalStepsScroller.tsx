@@ -20,11 +20,13 @@ import { useToast } from '../ui/ToastProvider';
 export interface HorizontalStepsScrollerProps {
   order: any;
   stepIndex: number;
+  onToggleViewMode?: () => void;
 }
 
 export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = ({
   order,
-  stepIndex
+  stepIndex,
+  onToggleViewMode
 }) => {
   const toast = useToast();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -113,16 +115,22 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
   }, []);
 
-  // 首次加载自动居中当前节点
+  // 首次加载及订单切换时自动居中当前节点
   useEffect(() => {
-    // 短暂延迟确保 DOM 布局已完成
+    const rAF = requestAnimationFrame(() => {
+      centerActiveNode(false);
+      updateScrollBounds();
+    });
     const timer = setTimeout(() => {
       centerActiveNode(false);
       updateScrollBounds();
-    }, 60);
+    }, 120);
 
-    return () => clearTimeout(timer);
-  }, [centerActiveNode, updateScrollBounds]);
+    return () => {
+      cancelAnimationFrame(rAF);
+      clearTimeout(timer);
+    };
+  }, [centerActiveNode, updateScrollBounds, order?.id, order?.orderNo, safeStep]);
 
   // 处理用户手动滚动事件：启动 10 秒恢复定时器
   const handleScroll = () => {
@@ -245,45 +253,58 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
           <span className="text-[#888880] text-[9.5px]">（支持左右横滑 · 视口聚焦3节点）</span>
         </div>
 
-        {countdown > 0 ? (
-          <button
-            type="button"
-            onClick={() => {
-              centerActiveNode(true);
-              setCountdown(0);
-              if (timerRef.current) clearTimeout(timerRef.current);
-              if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-            }}
-            className="inline-flex items-center gap-1 bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] px-2 py-0.5 rounded-full tabular-nums text-[9.5px] font-bold active:scale-95 transition-transform cursor-pointer shadow-2xs"
-            title="点击立即回正到当前执行状态"
-          >
-            <RotateCcw className="w-2.5 h-2.5 animate-spin" style={{ animationDuration: '4s' }} />
-            <span>{countdown}s 后自动回正</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => centerActiveNode(true)}
-            className="text-[9.5px] text-[#787770] hover:text-black font-medium flex items-center gap-0.5 transition-colors cursor-pointer"
-          >
-            <span>聚焦当前</span>
-            <ChevronRight className="w-3 h-3 text-[#9c9b94]" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {countdown > 0 ? (
+            <button
+              type="button"
+              onClick={() => {
+                centerActiveNode(true);
+                setCountdown(0);
+                if (timerRef.current) clearTimeout(timerRef.current);
+                if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+              }}
+              className="inline-flex items-center gap-1 bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] px-2 py-0.5 rounded-full tabular-nums text-[9.5px] font-bold active:scale-95 transition-transform cursor-pointer shadow-2xs"
+              title="点击立即回正到当前执行状态"
+            >
+              <RotateCcw className="w-2.5 h-2.5 animate-spin" style={{ animationDuration: '4s' }} />
+              <span>{countdown}s 后自动回正</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => centerActiveNode(true)}
+              className="text-[9.5px] text-[#787770] hover:text-black font-medium flex items-center gap-0.5 transition-colors cursor-pointer"
+            >
+              <span>聚焦当前</span>
+              <ChevronRight className="w-3 h-3 text-[#9c9b94]" />
+            </button>
+          )}
+
+          {onToggleViewMode && (
+            <button
+              type="button"
+              onClick={onToggleViewMode}
+              className="text-[9.5px] text-[#787770] hover:text-black font-semibold flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[#e5e5e0] bg-white transition-colors cursor-pointer"
+              title="点击切换为旋转木马视图"
+            >
+              <span>切为木马</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 外层可视窗口与滑动边缘阴影 */}
-      <div className="relative w-full overflow-hidden rounded-xl bg-gradient-to-b from-[#fcfcfb] to-[#f7f7f4] border border-[#ecece8] py-3.5 shadow-2xs">
+      <div className="relative w-full overflow-hidden rounded-xl bg-[#FAF9F7] border border-[#ecece8] py-3.5 shadow-2xs">
         {/* 左侧向左滑动的淡隐遮罩 */}
         {canScrollLeft && (
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#fcfcfb] to-transparent z-20 pointer-events-none flex items-center justify-start pl-1">
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#FAF9F7] to-transparent z-20 pointer-events-none flex items-center justify-start pl-1">
             <ChevronLeft className="w-3.5 h-3.5 text-[#888882] animate-pulse" />
           </div>
         )}
 
         {/* 右侧向右滑动的淡隐遮罩 */}
         {canScrollRight && (
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f7f7f4] to-transparent z-20 pointer-events-none flex items-center justify-end pr-1">
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#FAF9F7] to-transparent z-20 pointer-events-none flex items-center justify-end pr-1">
             <ChevronRight className="w-3.5 h-3.5 text-[#888882] animate-pulse" />
           </div>
         )}
