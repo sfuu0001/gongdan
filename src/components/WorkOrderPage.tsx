@@ -99,9 +99,9 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
       if (saved === 'all' || saved === 'first' || saved === 'none') return saved;
       const legacy = localStorage.getItem('urban_radar_auto_open_drawer');
       if (legacy !== null) return legacy === 'true' ? 'all' : 'none';
-      return 'all';
+      return 'none';
     } catch {
-      return 'all';
+      return 'none';
     }
   });
 
@@ -1204,33 +1204,49 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
           </motion.div>
         ) : (
           <AnimatePresence mode="popLayout">
-            {currentDisplayList.map((order, idx) => {
-              const orderKey = String(order.id || order.orderNo || idx);
-              const defaultExpanded = drawerExpandMode === 'all' ? true : drawerExpandMode === 'first' ? idx === 0 : false;
-              const isExpanded = expandedProgressIds[orderKey] !== undefined ? expandedProgressIds[orderKey] : defaultExpanded;
+            {(() => {
+              const anyExpanded = currentDisplayList.some((order, idx) => {
+                const orderKey = String(order.id || order.orderNo || idx);
+                const defaultExpanded = drawerExpandMode === 'all' ? true : drawerExpandMode === 'first' ? idx === 0 : false;
+                return expandedProgressIds[orderKey] !== undefined ? expandedProgressIds[orderKey] : defaultExpanded;
+              });
 
-              return (
-                <RealTimeOrderCard
-                  key={`cust-ord-${order.id || order.orderNo || idx}-${idx}`}
-                  order={order}
-                  idx={idx}
-                  isExpanded={isExpanded}
-                  onToggleExpand={toggleProgressDropdown}
-                  onTrackRadar={handleTrackRadar}
-                  onOpenRefund={(ord) => {
-                    if (ord.statusType === 'refund_pending') {
-                      toast.info('退单审核进行中', ord.refundReason || '临时有事 / 行程变更');
-                    } else if (ord.nonRefundable) {
-                      toast.warning('该订单不可自助退单', '餐品已进入后厨制作流程，需联系餐车主理人申诉');
-                    } else {
-                      toast.info('退单入口', '演示版工单页未内置退单申请表单');
-                    }
-                  }}
-                  onOpenChat={(ord) => onOpenMessageCenter?.(ord.orderNo || ord.id)}
-                  renderHorizontalSteps={renderHorizontalSteps}
-                />
-              );
-            })}
+              const visibleList = anyExpanded
+                ? currentDisplayList.filter((order, idx) => {
+                    const orderKey = String(order.id || order.orderNo || idx);
+                    const defaultExpanded = drawerExpandMode === 'all' ? true : drawerExpandMode === 'first' ? idx === 0 : false;
+                    return expandedProgressIds[orderKey] !== undefined ? expandedProgressIds[orderKey] : defaultExpanded;
+                  })
+                : currentDisplayList;
+
+              return visibleList.map((order, idx) => {
+                const orderKey = String(order.id || order.orderNo || idx);
+                const defaultExpanded = drawerExpandMode === 'all' ? true : drawerExpandMode === 'first' ? idx === 0 : false;
+                const isExpanded = expandedProgressIds[orderKey] !== undefined ? expandedProgressIds[orderKey] : defaultExpanded;
+
+                return (
+                  <RealTimeOrderCard
+                    key={`cust-ord-${order.id || order.orderNo || idx}-${idx}`}
+                    order={order}
+                    idx={idx}
+                    isExpanded={isExpanded}
+                    onToggleExpand={toggleProgressDropdown}
+                    onTrackRadar={handleTrackRadar}
+                    onOpenRefund={(ord) => {
+                      if (ord.statusType === 'refund_pending') {
+                        toast.info('退单审核进行中', ord.refundReason || '临时有事 / 行程变更');
+                      } else if (ord.nonRefundable) {
+                        toast.warning('该订单不可自助退单', '餐品已进入后厨制作流程，需联系餐车主理人申诉');
+                      } else {
+                        toast.info('退单入口', '演示版工单页未内置退单申请表单');
+                      }
+                    }}
+                    onOpenChat={(ord) => onOpenMessageCenter?.(ord.orderNo || ord.id)}
+                    renderHorizontalSteps={renderHorizontalSteps}
+                  />
+                );
+              });
+            })()}
           </AnimatePresence>
         )}
 

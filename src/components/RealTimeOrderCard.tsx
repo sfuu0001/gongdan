@@ -230,21 +230,71 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
       ref={elementRef as any}
       key={`cust-ord-${order.id || order.orderNo || idx}-${idx}`}
       data-reveal="hidden-down"
-      className="organic-card-reveal bg-white rounded-2xl border border-[#e8e8e3] shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-shadow duration-slow w-full divide-y divide-[#f2f2ee] mt-2.5 relative overflow-hidden group/card"
+      className={`organic-card-reveal bg-white border border-[#e8e8e3] shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-shadow duration-slow w-full divide-y divide-[#f2f2ee] mt-2.5 relative overflow-hidden group/card ${
+        !isExpanded ? 'rounded-[4px]' : 'rounded-2xl'
+      }`}
     >
-      {/* 顶部履约渠道专属微光渐变色条 */}
-      <div
-        className={`h-1 w-full transition ${
-          isDineIn
-            ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500'
-            : isPickup
-            ? 'bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-500'
-            : 'bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-600'
-        }`}
-      />
 
-      {/* Zone 1: Order Header & Table Info (含悬停/点击展开完整订单号小型下拉菜单) */}
-      <div className="bg-surface-card px-3.5 py-2.5 relative z-30" data-purpose="order-meta-header">
+      {!isExpanded ? (
+        /* 折叠状态 (Collapsed State): 仅展示渠道、单号、状态、金额四要素，点击整行任意区域可展开 */
+        <div
+          onClick={() => onToggleExpand(orderKey)}
+          className="px-3.5 py-3 flex items-center justify-between gap-3 bg-white hover:bg-[#fafaf8] transition-colors cursor-pointer select-none group"
+          title="点击整行任意区域展开订单详情"
+        >
+          {/* 1. 渠道标签 (Channel Tag: 堂食 / 自提 / 外卖 三个状态归一的单个标签) */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-bold shrink-0 border ${
+              isDineIn ? 'bg-amber-50 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}>
+              {isDineIn ? '堂食' : isPickup ? '自提' : '外卖'}
+            </span>
+
+            {/* 2. 单号 (Order Number) */}
+            <span className="text-xs font-bold text-obsidian tabular-nums tracking-tight truncate">
+              #{order.orderNo || 'UR-DIN-9821'}
+            </span>
+
+            {/* 3. 状态 (Status) */}
+            <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+              isDelivered ? 'bg-emerald-50 text-emerald-700' : isRefunded ? 'bg-rose-50 text-rose-700' : isEnRoute ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-700'
+            }`}>
+              {displayStatus}
+            </span>
+          </div>
+
+          {/* 4. 渠道单一收拢按钮 (堂食显桌号、自提显取餐码、外卖显雷达专送) 与金额 & 展开指示器 */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums border shrink-0 ${
+              isDineIn ? 'bg-amber-50/80 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50/80 text-sky-800 border-sky-200' : 'bg-emerald-50/80 text-emerald-800 border-emerald-200'
+            }`}>
+              {isDineIn ? (order.tableCode ? `${order.tableCode}桌` : '堂食座席') : isPickup ? `取餐 #${order.pickupCode || cleanOrderNo.slice(-4) || '8806'}` : '雷达专送'}
+            </span>
+
+            <span className="text-xs font-bold text-obsidian tabular-nums font-amount">
+              ¥{Number(order.totalAmount || 186).toFixed(2)}
+            </span>
+            <div className="w-5 h-5 rounded-full bg-[#f4f4f2] group-hover:bg-black group-hover:text-white transition flex items-center justify-center text-[#787770]">
+              <ChevronDown className="w-3 h-3 transition-transform group-hover:scale-110" />
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* 非折叠展开状态 (Expanded State): 显示原卡片信息 */
+        <>
+          {/* Zone 1: Order Header & Table Info (含悬停/点击展开完整订单号小型下拉菜单) */}
+          <div 
+            onClick={(e) => {
+              const target = e.target as HTMLElement;
+              if (target.closest('button') || target.closest('input') || target.closest('a') || target.closest('[role="button"]') || target.closest('.absolute')) {
+                return;
+              }
+              onToggleExpand(orderKey);
+            }}
+            className="bg-surface-card px-3.5 py-3 relative z-30 cursor-pointer select-none" 
+            data-purpose="order-meta-header"
+            title="点击表头空白区域可收起卡片"
+          >
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 shrink-0">
             {/* 完整订单号交互下拉菜单触发器 */}
@@ -424,26 +474,26 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {order.channel === 'dine_in' && order.tableCode && (
-              <span className="inline-flex items-center whitespace-nowrap bg-[#fef3c7] text-[#92400e] text-[10.5px] tabular-nums px-2 py-0.5 rounded-custom border border-[#fde68a] font-bold shadow-2xs">
-                {order.tableCode}桌
-              </span>
-            )}
-            {order.channel === 'pickup' && (order.pickupCode || order.orderNo) && (
-              <button
-                type="button"
-                onClick={togglePickupQr}
-                className="inline-flex items-center gap-1 whitespace-nowrap bg-[#f0fdfa] hover:bg-[#ccfbf1] active:scale-95 text-[#0f766e] text-[10.5px] tabular-nums px-2 py-0.5 rounded-custom border border-[#99f6e4] font-bold shadow-2xs transition cursor-pointer"
-                title="点击下拉展示真实取餐核销二维码小组件"
-              >
-                <QrCode className="w-3 h-3 text-[#0d9488]" />
-                <span>取餐码 #{order.pickupCode || order.orderNo?.slice(-4) || '8806'}</span>
-              </button>
-            )}
-            <span className="inline-flex items-center whitespace-nowrap bg-[#f5f5f4] text-[#57534e] text-[10.5px] px-2 py-0.5 rounded-custom font-semibold border border-[#e7e5e4] shrink-0">
-              {order.channel === 'dine_in' ? '堂食现制' : order.channel === 'pickup' ? '自提取餐' : '雷达专送'}
+          {/* 与非展开状态完全一致的右侧坐标轴垂直对齐按钮与信息布局 */}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums border shrink-0 ${
+              isDineIn ? 'bg-amber-50/80 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50/80 text-sky-800 border-sky-200' : 'bg-emerald-50/80 text-emerald-800 border-emerald-200'
+            }`}>
+              {isDineIn ? (order.tableCode ? `${order.tableCode}桌` : '堂食座席') : isPickup ? `取餐 #${order.pickupCode || cleanOrderNo.slice(-4) || '8806'}` : '雷达专送'}
             </span>
+
+            <span className="text-xs font-bold text-obsidian tabular-nums font-amount">
+              ¥{Number(order.totalAmount || 186).toFixed(2)}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => onToggleExpand(orderKey)}
+              className="w-5 h-5 rounded-full bg-[#f4f4f2] hover:bg-black hover:text-white transition flex items-center justify-center text-[#787770] cursor-pointer shadow-2xs"
+              title="点击收起卡片为折叠状态"
+            >
+              <ChevronUp className="w-3 h-3 transition-transform hover:scale-110" />
+            </button>
           </div>
         </div>
       </div>
@@ -1184,6 +1234,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+        </>
+      )}
     </div>
   );
 };
