@@ -225,13 +225,21 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
         {/* 舞台背景贯穿轨道线 */}
         <div className="absolute top-[68px] left-10 right-10 h-[2px] bg-[#e5e7eb] z-0 pointer-events-none" />
 
-        {/* 已完成路段的翡翠色高亮连接线 */}
+        {/* 已完成路段的翡翠色高亮动态连接线 (带流动光影动效) */}
         <div
-          className="absolute top-[68px] left-10 h-[2.5px] bg-[#10b981] z-0 pointer-events-none transition-all duration-300"
+          className="absolute top-[68px] left-10 h-[2.5px] bg-gradient-to-r from-[#10b981] to-[#34d399] z-0 pointer-events-none transition-all duration-500 ease-out overflow-hidden"
           style={{
             width: activeIdx === 0 ? '0%' : activeIdx === 1 ? '40%' : activeIdx === 2 ? '60%' : '100%'
           }}
-        />
+        >
+          <motion.div
+            aria-hidden="true"
+            initial={{ x: '-100%' }}
+            animate={{ x: '200%' }}
+            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+            className="w-full h-full bg-gradient-to-r from-transparent via-white/80 to-transparent"
+          />
+        </div>
 
         {/* 旋转木马左右切换按钮 */}
         {activeIdx > 0 && (
@@ -311,8 +319,13 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 transition={{ duration: 0.22, ease: 'easeOut' }}
                 className="flex flex-col items-center relative"
               >
-                {/* 核心光晕层 (Halo Gradient Effect) */}
-                <div className="absolute top-2 w-20 h-20 rounded-full bg-emerald-400/15 blur-md pointer-events-none -z-10 animate-pulse" />
+                {/* 核心光晕层 (截图呈现的扩散式翡翠光环与多重脉冲波) */}
+                <div className="absolute top-2 w-24 h-24 rounded-full bg-[#10b981]/20 blur-xl pointer-events-none -z-10" />
+                <motion.div
+                  animate={{ scale: [1, 1.25, 1], opacity: [0.35, 0.1, 0.35] }}
+                  transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
+                  className="absolute top-2 w-20 h-20 rounded-full bg-[#34d399]/25 blur-md pointer-events-none -z-10"
+                />
 
                 {/* 顶部时间胶囊徽章 */}
                 <div className="mb-1.5">
@@ -323,15 +336,18 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
 
                 {/* 核心高保真放大圆环 */}
                 <div className="relative">
-                  <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white border-[2.5px] border-[#10b981] shadow-[0_4px_14px_rgba(16,185,129,0.25)] flex items-center justify-center transition-transform">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white border-[2.8px] border-[#10b981] shadow-[0_4px_18px_rgba(16,185,129,0.32)] flex items-center justify-center transition-transform"
+                  >
                     {renderIconForStep(activeIdx, true)}
-                  </div>
+                  </motion.div>
 
-                  {/* 正在进行微脉冲点 */}
+                  {/* 正在进行微脉冲点 (与截图右上角绿色卫星脉冲点精确一致) */}
                   {activeIdx === safeStep && !isDelivered && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-[#059669] ring-2 ring-white"></span>
+                    <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#059669] ring-2 ring-white shadow-xs" />
                     </span>
                   )}
                 </div>

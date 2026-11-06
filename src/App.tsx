@@ -7,7 +7,7 @@ import { WorkOrderPage } from './components/WorkOrderPage';
  */
 export default function App() {
   return (
-    <div className="min-h-screen w-full bg-[#f9f9f7] flex justify-center">
+    <div className="min-h-screen w-full bg-[#ffffff] flex justify-center">
       <div className="w-full max-w-[430px] min-h-screen bg-[#f9f9f7] relative overflow-x-hidden">
         <ToastProvider>
           <WorkOrderPage

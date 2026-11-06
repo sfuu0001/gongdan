@@ -27,6 +27,7 @@ import { useToast } from '../ui/ToastProvider';
 import { matchDishImageUrl } from '../data/dishImages';
 import { generateQrCodeDataUrl } from '../utils/qrCode';
 import { useCardScrollReveal } from '../utils/useCardScrollReveal';
+import { RollingAmount } from './RollingAmount';
 
 export interface RealTimeOrderCardProps {
   order: any;
@@ -37,6 +38,7 @@ export interface RealTimeOrderCardProps {
   onOpenRefund: (order: any) => void;
   onOpenChat: (order: any) => void;
   renderHorizontalSteps: (order: any, stepIndex: number) => React.ReactNode;
+  refreshPulseKey?: number;
 }
 
 export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
@@ -47,7 +49,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
   onTrackRadar,
   onOpenRefund,
   onOpenChat,
-  renderHorizontalSteps
+  renderHorizontalSteps,
+  refreshPulseKey = 0
 }) => {
   const toast = useToast();
   const { elementRef } = useCardScrollReveal();
@@ -195,6 +198,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
 
   // 智能获取菜品商业级美食摄影图片
   const getDishImage = (dish: any) => {
+    if (!dish) return matchDishImageUrl({});
     if (dish.imageUrl) return dish.imageUrl;
     if (dish.image) return dish.image;
     return matchDishImageUrl({ id: dish.id, name: dish.name, category: dish.category });
@@ -209,73 +213,271 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
   const isRefunded = order.statusType === 'refunded' || order.status === '已退款' || order.status === '已取消';
   const isEnRoute = order.statusType === 'en_route' || order.statusType === 'delivering' || order.status === '骑手配送中' || order.status === 'DELIVERING';
 
+  const isReady = order.statusType === 'ready' || order.status === 'READY';
+  const isCooking = order.statusType === 'cooking' || order.status === 'PREPARING';
+
   const displayStatus = isRefunded
     ? '已退款'
     : isDelivered
     ? '已送达'
     : isEnRoute
     ? '配送中'
-    : order.statusType === 'ready' || order.status === 'READY'
+    : isReady
     ? '待取餐'
-    : order.statusType === 'cooking' || order.status === 'PREPARING'
+    : isCooking
     ? '现制中'
     : order.statusConfig?.shortLabel || (order.status === 'DELIVERED' ? '已送达' : order.status) || '已接单';
+
+  const StatusIcon = isRefunded
+    ? RotateCcw
+    : isDelivered
+    ? CheckCircle2
+    : isEnRoute
+    ? Truck
+    : isReady
+    ? PackageCheck
+    : isCooking
+    ? Flame
+    : Clock;
 
   // 「刚刚更新」微脉冲指示：原工程依赖组件内定时器/状态签名对比，
   // 独立包中由上游映射层直接下发 isRecentlyUpdated 标记，这里收敛为常量。
   const isStatusRecentlyUpdated = Boolean(order.isRecentlyUpdated || order._justUpdated || order.justUpdated);
 
   return (
-    <div
+    <motion.div
       ref={elementRef as any}
-      key={`cust-ord-${order.id || order.orderNo || idx}-${idx}`}
+      key={`cust-ord-${order.id || order.orderNo || idx}-${idx}-${refreshPulseKey}`}
+      initial={refreshPulseKey > 0 ? { opacity: 0.65, y: 12, scale: 0.98 } : false}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        type: 'spring',
+        stiffness: 450,
+        damping: 24,
+        mass: 0.8,
+        delay: refreshPulseKey > 0 ? Math.min(idx * 0.045, 0.25) : 0,
+      }}
       data-reveal="hidden-down"
       className={`organic-card-reveal bg-white border border-[#e8e8e3] shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] transition-shadow duration-slow w-full divide-y divide-[#f2f2ee] mt-2.5 relative overflow-hidden group/card ${
         !isExpanded ? 'rounded-[4px]' : 'rounded-2xl'
       }`}
     >
+      {/* 刷新时掠过的全卡激光流光扫光层 */}
+      {refreshPulseKey > 0 && (
+        <motion.div
+          key={`flash-${refreshPulseKey}`}
+          initial={{ x: '-150%' }}
+          animate={{ x: '250%' }}
+          transition={{
+            duration: 0.85,
+            ease: [0.16, 1, 0.3, 1],
+            delay: Math.min(idx * 0.045, 0.25),
+          }}
+          className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -skew-x-25 pointer-events-none z-30"
+        />
+      )}
 
       {!isExpanded ? (
-        /* 折叠状态 (Collapsed State): 仅展示渠道、单号、状态、金额四要素，点击整行任意区域可展开 */
+        /* 折叠状态 (Collapsed State): 紧凑高密度表单行，含缩略图、双行信息、状态胶囊、环形进度与右侧金额 */
         <div
           onClick={() => onToggleExpand(orderKey)}
-          className="px-3.5 py-3 flex items-center justify-between gap-3 bg-white hover:bg-[#fafaf8] transition-colors cursor-pointer select-none group"
+          className={`px-3.5 ${idx === 0 ? 'py-[11px] pl-[14px] rounded-[6px]' : 'py-2.5'} flex items-center justify-between gap-2.5 bg-white hover:bg-[#fafaf8] transition-colors cursor-pointer select-none group`}
           title="点击整行任意区域展开订单详情"
         >
-          {/* 1. 渠道标签 (Channel Tag: 堂食 / 自提 / 外卖 三个状态归一的单个标签) */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10.5px] font-bold shrink-0 border ${
-              isDineIn ? 'bg-amber-50 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-            }`}>
-              {isDineIn ? '堂食' : isPickup ? '自提' : '外卖'}
-            </span>
+          {/* 左侧：缩略图 + 双行信息 */}
+          <motion.div
+            key={`left-${refreshPulseKey}`}
+            initial={refreshPulseKey > 0 ? { opacity: 0.35, x: -6 } : false}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{
+              type: 'spring',
+              stiffness: 460,
+              damping: 24,
+              delay: refreshPulseKey > 0 ? Math.min(idx * 0.03, 0.15) : 0,
+            }}
+            className="flex items-center gap-2.5 min-w-0 flex-1"
+          >
+            <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-[#f4f4f2] border border-[#e8e8e3] shrink-0">
+              <img
+                src={getDishImage(order.items?.[0])}
+                alt={order.storeName || '餐品'}
+                className="w-full h-full object-cover"
+              />
+              <span
+                className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full ring-1 ring-white ${
+                  isDelivered
+                    ? 'bg-emerald-500'
+                    : isRefunded
+                    ? 'bg-rose-500'
+                    : isEnRoute
+                    ? 'bg-sky-500'
+                    : 'bg-amber-500'
+                }`}
+              />
+            </div>
 
-            {/* 2. 单号 (Order Number) */}
-            <span className="text-xs font-bold text-obsidian tabular-nums tracking-tight truncate">
-              #{order.orderNo || 'UR-DIN-9821'}
-            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[13px] font-bold text-[#111827] truncate">
+                  {order.storeName || '黑曜石 01 号'}
+                </span>
+                <span className="text-[11px] font-medium text-[#64748b] tabular-nums shrink-0">
+                  #{order.orderNo || 'DIN-9821'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] leading-tight mt-0.5 truncate">
+                <span className="relative inline-flex items-center overflow-hidden font-semibold text-[#0284c7] truncate">
+                  {isDineIn ? (
+                    order.tableCode ? `堂食·${order.tableCode}` : '堂食·A区'
+                  ) : isPickup ? (
+                    `自提·#${order.pickupCode || cleanOrderNo.slice(-4) || 'C-04'}`
+                  ) : (
+                    <>
+                      <span>专送·骑手#038</span>
+                      <motion.span
+                        aria-hidden="true"
+                        initial={{ x: '-130%' }}
+                        animate={{ x: '230%' }}
+                        transition={{
+                          repeat: Infinity,
+                          repeatDelay: 2.2,
+                          duration: 1.1,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="absolute inset-y-0 w-7 bg-gradient-to-r from-transparent via-white/85 to-transparent -skew-x-20 pointer-events-none"
+                      />
+                    </>
+                  )}
+                </span>
+                <span className="text-[#cbd5e1]">|</span>
+                <span className="text-[#64748b] tabular-nums shrink-0">
+                  {order.createdAtText || order.time || '20:10'}
+                </span>
+              </div>
+            </div>
+          </motion.div>
 
-            {/* 3. 状态 (Status) */}
-            <span className={`text-[10.5px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-              isDelivered ? 'bg-emerald-50 text-emerald-700' : isRefunded ? 'bg-rose-50 text-rose-700' : isEnRoute ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-700'
-            }`}>
-              {displayStatus}
-            </span>
-          </div>
+          {/* 右侧：状态胶囊 + 环形进度 + 金额与渠道副标 */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <motion.span
+              key={`status-${displayStatus}-${refreshPulseKey}`}
+              initial={refreshPulseKey > 0 ? { scale: 0.78, opacity: 0, y: 6 } : false}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 520,
+                damping: 18,
+                delay: refreshPulseKey > 0 ? Math.min(idx * 0.03 + 0.03, 0.18) : 0,
+              }}
+              className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
+                isDelivered
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                  : isRefunded
+                  ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                  : isEnRoute
+                  ? 'bg-sky-50 text-sky-700 border-sky-200/80'
+                  : 'bg-amber-50 text-amber-700 border-amber-200/80'
+              }`}
+            >
+              <StatusIcon className="w-3 h-3 shrink-0" />
+              <span>{displayStatus}</span>
+            </motion.span>
 
-          {/* 4. 渠道单一收拢按钮 (堂食显桌号、自提显取餐码、外卖显雷达专送) 与金额 & 展开指示器 */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums border shrink-0 ${
-              isDineIn ? 'bg-amber-50/80 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50/80 text-sky-800 border-sky-200' : 'bg-emerald-50/80 text-emerald-800 border-emerald-200'
-            }`}>
-              {isDineIn ? (order.tableCode ? `${order.tableCode}桌` : '堂食座席') : isPickup ? `取餐 #${order.pickupCode || cleanOrderNo.slice(-4) || '8806'}` : '雷达专送'}
-            </span>
+            {/* 环形进度指示器（圆圈注入轨迹动画渲染） */}
+            {isDelivered || isReady ? (
+              <motion.div
+                key={`done-${refreshPulseKey}`}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 520,
+                  damping: 16,
+                  delay: Math.min(idx * 0.03 + 0.05, 0.2),
+                }}
+                className="flex items-center gap-1 shrink-0"
+              >
+                <span className="w-3.5 h-3.5 rounded-full border border-emerald-300 flex items-center justify-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                </span>
+                <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
+              </motion.div>
+            ) : (
+              <div className="flex items-center gap-1 shrink-0">
+                {/* 动态注入轨迹圆环 */}
+                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 -rotate-90 overflow-visible" viewBox="0 0 20 20">
+                    {/* 底层浅色底轨 */}
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="7.5"
+                      fill="none"
+                      stroke="#e2e8f0"
+                      strokeWidth="2.2"
+                    />
+                    {/* 注入轨迹动态高亮弧段 */}
+                    <motion.circle
+                      key={`ring-track-${progressPct}-${refreshPulseKey}`}
+                      cx="10"
+                      cy="10"
+                      r="7.5"
+                      fill="none"
+                      stroke={isEnRoute ? '#0284c7' : '#ea580c'}
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeDasharray={2 * Math.PI * 7.5}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 7.5 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 7.5 * (1 - Math.max(progressPct, 25) / 100) }}
+                      transition={{
+                        duration: 0.68,
+                        ease: [0.16, 1, 0.3, 1],
+                        delay: Math.min(idx * 0.03 + 0.05, 0.2),
+                      }}
+                    />
+                  </svg>
+                </div>
 
-            <span className="text-xs font-bold text-obsidian tabular-nums font-amount">
-              ¥{Number(order.totalAmount || 186).toFixed(2)}
-            </span>
-            <div className="w-5 h-5 rounded-full bg-[#f4f4f2] group-hover:bg-black group-hover:text-white transition flex items-center justify-center text-[#787770]">
-              <ChevronDown className="w-3 h-3 transition-transform group-hover:scale-110" />
+                {/* 右侧比率数值（如 1/3 或 70%）带弹性入场 */}
+                <motion.span
+                  key={`pct-val-${progressPct}-${refreshPulseKey}`}
+                  initial={{ scale: 0.75, opacity: 0, x: -3 }}
+                  animate={{ scale: 1, opacity: 1, x: 0 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 480,
+                    damping: 20,
+                    delay: Math.min(idx * 0.03 + 0.08, 0.22),
+                  }}
+                  className="text-[12px] font-black tabular-nums tracking-tight text-[#1e293b]"
+                >
+                  {isEnRoute ? `${progressPct}%` : `${Math.min(stepIndex, 3)}/3`}
+                </motion.span>
+              </div>
+            )}
+
+            {/* 金额与副标 */}
+            <div className="flex flex-col items-end justify-center shrink-0 min-w-[58px] whitespace-nowrap">
+              <div className="text-[13px] font-bold text-[#111827] transition-transform duration-200 group-hover:scale-105 group-hover:text-black leading-tight">
+                <RollingAmount
+                  value={Number(order.totalAmount || 186)}
+                  triggerKey={`${order.status}-${order.stepIndex}-${refreshPulseKey}`}
+                />
+              </div>
+              <motion.div
+                key={`sub-${progressPct}-${refreshPulseKey}`}
+                initial={refreshPulseKey > 0 ? { y: 6, opacity: 0 } : false}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 480,
+                  damping: 20,
+                  delay: refreshPulseKey > 0 ? Math.min(idx * 0.03 + 0.09, 0.24) : 0,
+                }}
+                className="text-[10px] font-semibold text-[#059669] leading-tight"
+              >
+                {isDelivered ? '已闭环' : isDineIn ? '堂食' : isPickup ? '自提' : `${progressPct}%`}
+              </motion.div>
             </div>
           </div>
         </div>
@@ -426,8 +628,20 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                             取餐码: #{order.pickupCode}
                           </span>
                         ) : (
-                          <span className="font-bold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200">
-                            雷达专送
+                          <span className="relative overflow-hidden inline-flex items-center font-bold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200">
+                            <span>雷达专送</span>
+                            <motion.span
+                              aria-hidden="true"
+                              initial={{ x: '-130%' }}
+                              animate={{ x: '230%' }}
+                              transition={{
+                                repeat: Infinity,
+                                repeatDelay: 2.2,
+                                duration: 1.1,
+                                ease: [0.22, 1, 0.36, 1],
+                              }}
+                              className="absolute inset-y-0 w-6 bg-gradient-to-r from-transparent via-white/90 to-transparent -skew-x-20 pointer-events-none"
+                            />
                           </span>
                         )}
                       </div>
@@ -476,10 +690,24 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
 
           {/* 与非展开状态完全一致的右侧坐标轴垂直对齐按钮与信息布局 */}
           <div className="flex items-center gap-2 shrink-0">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums border shrink-0 ${
+            <span className={`relative overflow-hidden inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums border shrink-0 ${
               isDineIn ? 'bg-amber-50/80 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50/80 text-sky-800 border-sky-200' : 'bg-emerald-50/80 text-emerald-800 border-emerald-200'
             }`}>
-              {isDineIn ? (order.tableCode ? `${order.tableCode}桌` : '堂食座席') : isPickup ? `取餐 #${order.pickupCode || cleanOrderNo.slice(-4) || '8806'}` : '雷达专送'}
+              <span>{isDineIn ? (order.tableCode ? `${order.tableCode}桌` : '堂食座席') : isPickup ? `取餐 #${order.pickupCode || cleanOrderNo.slice(-4) || '8806'}` : '雷达专送'}</span>
+              {!isDineIn && !isPickup && (
+                <motion.span
+                  aria-hidden="true"
+                  initial={{ x: '-130%' }}
+                  animate={{ x: '230%' }}
+                  transition={{
+                    repeat: Infinity,
+                    repeatDelay: 2.2,
+                    duration: 1.1,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  className="absolute inset-y-0 w-6 bg-gradient-to-r from-transparent via-white/90 to-transparent -skew-x-20 pointer-events-none"
+                />
+              )}
             </span>
 
             <span className="text-xs font-bold text-obsidian tabular-nums font-amount">
@@ -953,13 +1181,24 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className="inline-flex items-center gap-1 bg-[#fff7ed] text-[#c2410c] text-[10px] font-bold px-2 py-0.2 rounded-full border border-[#fed7aa] whitespace-nowrap shadow-2xs">
                           <Flame className="w-2.5 h-2.5 text-[#ea580c] animate-pulse" />
-                          现制 {dishItem.prepProgress || 75}%
+                          <span>现制 {dishItem.prepProgress || 75}%</span>
                         </span>
-                        <div className="w-16 h-1.5 bg-[#f4f4f2] rounded-full overflow-hidden border border-[#e5e7eb]">
-                          <div
-                            className="h-full bg-gradient-to-r from-[#ea580c] to-[#f97316] rounded-full transition duration-500"
-                            style={{ width: `${dishItem.prepProgress || 75}%` }}
-                          />
+                        <div className="relative w-16 h-1.5 bg-[#f4f4f2] rounded-full overflow-hidden border border-[#e5e7eb]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${dishItem.prepProgress || 75}%` }}
+                            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                            className="relative h-full bg-gradient-to-r from-[#ea580c] via-[#f97316] to-[#fb923c] rounded-full overflow-hidden"
+                          >
+                            {/* 流动高光轨迹动效 */}
+                            <motion.span
+                              aria-hidden="true"
+                              initial={{ x: '-100%' }}
+                              animate={{ x: '250%' }}
+                              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                              className="absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-white/80 to-transparent -skew-x-20 pointer-events-none"
+                            />
+                          </motion.div>
                         </div>
                       </div>
                     )}
@@ -1236,6 +1475,6 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
       </AnimatePresence>
         </>
       )}
-    </div>
+    </motion.div>
   );
 };

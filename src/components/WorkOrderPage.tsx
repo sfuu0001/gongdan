@@ -28,6 +28,7 @@ import { useToast } from '../ui/ToastProvider';
 import { HorizontalStepsScroller } from './HorizontalStepsScroller';
 import { CarouselStepsScroller } from './CarouselStepsScroller';
 import { RealTimeOrderCard } from './RealTimeOrderCard';
+import { AnimatedNumber } from './AnimatedNumber';
 import { getOrderStatusConfig } from '../data/statusConfig';
 import { MOCK_ORDERS, MOCK_DELIVERED_ORDERS, MOCK_HISTORY_ORDERS, fetchOrdersFromCloudFunction } from '../data/orders';
 import type { Order, UserProfile, TabType } from '../types';
@@ -460,9 +461,12 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
     return list;
   }, [orders, uidScope, currentUid, uidSearchPrefix]);
 
+  const [refreshPulseKey, setRefreshPulseKey] = useState(0);
+
   // Pull orders directly from local fallback (原云函数 `orders` / `getOrders`)
   const handlePullFromCloudFunction = async () => {
     setIsPullingCloud(true);
+    setRefreshPulseKey((k) => k + 1);
     toast.info('正在调用云函数 [orders] 同步最新订单...');
     try {
       const res = await fetchOrdersFromCloudFunction(undefined, uidScope === 'my_uid' ? currentUid : undefined);
@@ -648,81 +652,123 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="w-full max-w-5xl mx-auto min-h-full flex-1 bg-[#f9f9f7] text-[#1a1c1b] px-2.5 sm:px-4 pt-1.5 pb-20 sm:pb-24 flex flex-col font-sans select-none"
+      className="w-full max-w-5xl mx-auto min-h-full flex-1 bg-[#ffffff] text-[#1a1c1b] px-2.5 sm:px-4 pt-1.5 pb-20 sm:pb-24 flex flex-col font-sans select-none"
     >
       {/* Header Bar */}
-      <div className="pt-2 pb-2 px-0.5 flex items-center justify-between gap-2 sticky top-0 z-20 bg-[#f9f9f7]/95 backdrop-blur-xs border-b border-[#e6e6e4]/60">
-        <div className="flex items-center gap-2">
+      <div className="pt-2 pb-2.5 px-0.5 flex items-center justify-between gap-2 sticky top-0 z-20 bg-[#ffffff]/95 backdrop-blur-xs border-b border-[#e6e6e4]/70 relative">
+        {/* 顶部云端同步进度光束 (刷新时高保真动态光带) */}
+        {isPullingCloud && (
+          <motion.div
+            initial={{ x: '-100%' }}
+            animate={{ x: '100%' }}
+            transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+            className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#10b981] to-transparent pointer-events-none"
+          />
+        )}
+        <div className="flex items-center gap-2.5">
           {onGoToMenu && (
             <button
               type="button"
               id="orders-header-back-btn"
               onClick={onGoToMenu}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border border-[#e6e6e4] rounded-lg text-xs font-bold text-[#1a1c1b] hover:bg-neutral-100 hover:border-neutral-400 active:scale-95 transition shadow-2xs cursor-pointer group shrink-0"
+              className="w-8 h-8 rounded-[3px] bg-white border border-[#e2e3df] hover:bg-neutral-50 hover:border-neutral-300 active:scale-95 transition shadow-2xs flex items-center justify-center cursor-pointer group shrink-0"
               title="返回点餐"
               aria-label="返回点餐"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-neutral-800 transition-transform group-hover:-translate-x-0.5" />
-              <span>返回</span>
+              <ArrowLeft className="w-4 h-4 text-[#0284c7] stroke-[2.2] transition-transform group-hover:-translate-x-0.5" />
             </button>
           )}
-          <div>
-            <h2 className="text-lg sm:text-xl font-black tracking-tight text-black flex items-center gap-1.5">
-              <span>实时订单</span>
-              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-            </h2>
-          </div>
+          <h2 className="text-base sm:text-lg font-black tracking-tight text-[#0f172a] flex items-center gap-2">
+            <span className="text-[17px] font-bold text-[#0f172a] tracking-tight">实时订单</span>
+            <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10b981]" />
+            </span>
+          </h2>
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* 履约时序流转切换按钮 (截图所指位置) */}
+          {/* 按钮 1: 履约时序流转切换按钮 (砌筑动画 第 1 块砖: delay 0s) */}
           <motion.button
-            type="button"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.95 }}
+            key={`btn-timeline-${refreshPulseKey}`}
+            initial={refreshPulseKey > 0 ? { opacity: 0, scale: 0.65, x: -16, y: -4, rotate: -6 } : false}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+            transition={{
+              type: 'spring',
+              stiffness: 460,
+              damping: 22,
+              mass: 0.7,
+              delay: 0,
+            }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.92 }}
             onClick={handleToggleTimelineMode}
-            className={`px-2.5 py-1 rounded-full border text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs ${
+            className={`w-[34px] h-[34px] rounded-[6px] border transition cursor-pointer flex items-center justify-center shadow-2xs shrink-0 ${
               timelineMode === 'carousel'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-400/30'
-                : 'bg-white text-black border-[#e6e6e4] hover:bg-neutral-100'
+                ? 'bg-[#ecfdf5] text-[#059669] border-[#10b981] ring-1 ring-[#10b981]/20'
+                : 'bg-white text-[#334155] border-[#e2e3df] hover:bg-neutral-50'
             }`}
-            title="点击切换履约时序流转视图样式（旋转木马 / 经典横滑）"
+            title={timelineMode === 'carousel' ? '当前：木马时序（点击切换经典横滑）' : '当前：横滑时序（点击切换旋转木马）'}
             aria-label="切换履约时序流转视图样式"
           >
             <Orbit
-              className={`w-3 h-3 ${
-                timelineMode === 'carousel' ? 'text-emerald-600 animate-spin' : 'text-neutral-600'
+              className={`w-4 h-4 stroke-[2.2] ${
+                timelineMode === 'carousel' ? 'text-[#059669] animate-spin' : 'text-[#334155]'
               }`}
               style={{ animationDuration: '8s' }}
             />
-            <span>{timelineMode === 'carousel' ? '木马时序' : '横滑时序'}</span>
           </motion.button>
 
-          {/* Pull from Cloud Function Button */}
+          {/* 按钮 2: 云端刷新同步按钮 (砌筑动画 第 2 块砖: delay 0.08s) */}
           <motion.button
-            type="button"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.95 }}
+            key={`btn-refresh-${refreshPulseKey}`}
+            initial={refreshPulseKey > 0 ? { opacity: 0, scale: 0.65, x: -16, y: -4, rotate: -6 } : false}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+            transition={{
+              type: 'spring',
+              stiffness: 460,
+              damping: 22,
+              mass: 0.7,
+              delay: 0.08,
+            }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.92 }}
             onClick={handlePullFromCloudFunction}
             disabled={isPullingCloud}
-            className="px-2.5 py-1 rounded-full bg-white border border-[#e6e6e4] text-black hover:bg-neutral-100 active:scale-95 text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shadow-2xs disabled:opacity-50"
-            title="调用云函数拉取最新订单"
+            className="w-[34px] h-[34px] rounded-[6px] bg-white border border-[#e2e3df] text-[#1e293b] hover:bg-neutral-50 active:scale-95 transition cursor-pointer flex items-center justify-center shadow-2xs disabled:opacity-50 shrink-0"
+            title={isPullingCloud ? '正在同步最新订单...' : '手动刷新同步最新订单'}
+            aria-label="手动刷新同步最新订单"
           >
-            <RefreshCw className={`w-3 h-3 text-emerald-600 ${isPullingCloud ? 'animate-spin' : ''}`} />
-            <span>{isPullingCloud ? '拉取中' : '云端拉取'}</span>
+            <RefreshCw className={`w-4 h-4 stroke-[2.2] ${isPullingCloud ? 'text-[#059669] animate-spin' : 'text-[#1e293b]'}`} />
           </motion.button>
 
-          {/* Bell Icon */}
+          {/* 按钮 3: 通知铃铛按钮 (砌筑动画 第 3 块砖: delay 0.16s) */}
           <motion.button
-            type="button"
-            whileHover={{ scale: 1.08 }}
+            key={`btn-bell-${refreshPulseKey}`}
+            initial={refreshPulseKey > 0 ? { opacity: 0, scale: 0.65, x: -16, y: -4, rotate: -6 } : false}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0, rotate: 0 }}
+            transition={{
+              type: 'spring',
+              stiffness: 460,
+              damping: 22,
+              mass: 0.7,
+              delay: 0.16,
+            }}
+            whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.92 }}
             onClick={handleBellClick}
-            className="w-7 h-7 rounded-full bg-white border border-[#e6e6e4] text-black hover:bg-neutral-100 active:scale-95 transition cursor-pointer relative flex items-center justify-center shadow-2xs shrink-0"
+            className="w-[34px] h-[34px] rounded-[6px] bg-white border border-[#e2e3df] text-[#1e293b] hover:bg-neutral-50 active:scale-95 transition cursor-pointer relative flex items-center justify-center shadow-2xs shrink-0"
             title="通知"
+            aria-label="通知"
           >
-            <Bell className="w-3.5 h-3.5 stroke-[1.8]" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#22c55e] ring-2 ring-white" />
+            <Bell className="w-4 h-4 stroke-[2.2]" />
+            <motion.span
+              key={`bell-badge-${refreshPulseKey}`}
+              initial={refreshPulseKey > 0 ? { scale: 0 } : false}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15, delay: 0.24 }}
+              className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#10b981] ring-1.5 ring-white"
+            />
           </motion.button>
         </div>
       </div>
@@ -748,13 +794,13 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
           </div>
 
           {/* Segmented Switcher with Clean Tactile Pill Style */}
-          <div className="inline-flex items-center p-0.5 bg-[#FAF9F7] rounded-lg border border-[#e5e5e1] gap-0.5 shrink-0">
+          <div className="inline-flex items-center p-0.5 bg-[#ffffff] rounded-[5px] border border-[#e5e5e1] gap-0.5 shrink-0">
             <button
               type="button"
               onClick={() => setUidScope('my_uid')}
               className={`px-2 py-1 rounded-md text-[10.5px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
                 uidScope === 'my_uid'
-                  ? 'bg-white text-black shadow-2xs font-bold'
+                  ? 'bg-[#ededed] text-black shadow-2xs font-bold'
                   : 'text-[#6e6d66] hover:text-black'
               }`}
             >
@@ -766,7 +812,10 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
                     : 'bg-[#e2e2de] text-[#666]'
                 }`}
               >
-                {orders.filter((o) => !o.userId || o.userId === currentUid || o.userId.startsWith(currentUid) || o.orderNo.includes(currentUid.slice(-4))).length}
+                <AnimatedNumber
+                  value={orders.filter((o) => !o.userId || o.userId === currentUid || o.userId.startsWith(currentUid) || o.orderNo.includes(currentUid.slice(-4))).length}
+                  triggerKey={refreshPulseKey}
+                />
               </span>
             </button>
             <button
@@ -786,7 +835,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
                     : 'bg-[#e2e2de] text-[#666]'
                 }`}
               >
-                {orders.length}
+                <AnimatedNumber value={orders.length} triggerKey={refreshPulseKey} />
               </span>
             </button>
           </div>
@@ -806,7 +855,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             onFocus={() => setIsSuggestOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="输入 UID / 订单号 / 菜品 / 取餐码联想..."
-            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#FAF9F7] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
+            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#f5f5f5] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
           />
           <AnimatePresence>
             {uidSearchPrefix && (
@@ -946,59 +995,71 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
 
       {/* Tabs Row with Unified Selection State & Drawer Auto-Open Switch */}
       <div className="pt-0.5 pb-1 flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          <button
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {/* 进行中 Tab (截图三：圆角胶囊、天蓝描边、实心圆点数字徽标) */}
+          <motion.button
             type="button"
+            layout
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('in_progress')}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+            className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'in_progress'
-                ? 'bg-sky-50/80 text-sky-600 border-2 border-sky-500 shadow-2xs'
-                : 'text-[#55554f] bg-[#eeeee9] border-transparent hover:bg-[#e4e4de]'
+                ? 'text-[#0284c7] bg-[#f0f9ff] border-2 border-[#0284c7] shadow-xs'
+                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
-            <CookingPot className={`w-3.5 h-3.5 ${activeTab === 'in_progress' ? 'text-sky-600' : 'text-[#787770]'}`} />
+            <CookingPot className={`w-3.5 h-3.5 ${activeTab === 'in_progress' ? 'text-[#0284c7]' : 'text-[#64748b]'}`} />
             <span>进行中</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums font-black ${
-                activeTab === 'in_progress' ? 'bg-sky-500 text-white' : 'bg-white text-black'
+              className={`w-4 h-4 rounded-full text-[10px] font-black flex items-center justify-center tabular-nums transition-colors ${
+                activeTab === 'in_progress' ? 'bg-[#0284c7] text-white' : 'bg-[#e2e8f0] text-[#334155]'
               }`}
             >
-              {inProgressList.length}
+              <AnimatedNumber value={inProgressList.length} triggerKey={refreshPulseKey} />
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          {/* 近期送达 Tab (截图三：灰色微圆角胶囊、打勾图标、浅灰圆点数字徽标) */}
+          <motion.button
             type="button"
+            layout
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('recently_delivered')}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+            className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'recently_delivered'
-                ? 'bg-emerald-50/80 text-emerald-600 border-2 border-emerald-500 shadow-2xs'
-                : 'text-[#55554f] bg-[#eeeee9] border-transparent hover:bg-[#e4e4de]'
+                ? 'text-[#059669] bg-[#ecfdf5] border-2 border-[#10b981] shadow-xs'
+                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
-            <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'recently_delivered' ? 'text-emerald-600' : 'text-[#787770]'}`} />
+            <CheckCircle2 className={`w-3.5 h-3.5 ${activeTab === 'recently_delivered' ? 'text-[#059669]' : 'text-[#64748b]'}`} />
             <span>近期送达</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full tabular-nums font-black ${
-                activeTab === 'recently_delivered' ? 'bg-emerald-500 text-white' : 'bg-white text-black'
+              className={`w-4 h-4 rounded-full text-[10px] font-black flex items-center justify-center tabular-nums transition-colors ${
+                activeTab === 'recently_delivered' ? 'bg-[#10b981] text-white' : 'bg-[#e2e8f0] text-[#334155]'
               }`}
             >
-              {recentlyDeliveredList.length}
+              <AnimatedNumber value={recentlyDeliveredList.length} triggerKey={refreshPulseKey} />
             </span>
-          </button>
+          </motion.button>
 
-          <button
+          {/* 历史订单 Tab (截图三：时钟图标 + 灰色胶囊) */}
+          <motion.button
             type="button"
+            layout
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab('history')}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+            className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all ${
               activeTab === 'history'
-                ? 'bg-amber-50/80 text-amber-600 border-2 border-amber-500 shadow-2xs'
-                : 'text-[#55554f] bg-[#eeeee9] border-transparent hover:bg-[#e4e4de]'
+                ? 'text-[#d97706] bg-[#fffbeb] border-2 border-[#f59e0b] shadow-xs'
+                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
-            <Clock className={`w-3.5 h-3.5 ${activeTab === 'history' ? 'text-amber-600' : 'text-[#787770]'}`} />
+            <Clock className={`w-3.5 h-3.5 ${activeTab === 'history' ? 'text-[#d97706]' : 'text-[#64748b]'}`} />
             <span>历史订单</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* 出餐进度抽屉下拉菜单 (设计为下拉菜单，对应选中的元素) */}
@@ -1009,7 +1070,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             aria-haspopup="true"
             aria-expanded={isDrawerDropdownOpen}
             aria-label="出餐制作抽屉视图配置"
-            className={`w-7 h-7 rounded-full border transition cursor-pointer flex items-center justify-center shadow-2xs select-none shrink-0 group ${
+            className={`w-7 h-7 rounded-[1.68435px] border transition cursor-pointer flex items-center justify-center shadow-2xs select-none shrink-0 group ${
               isDrawerDropdownOpen
                 ? 'bg-black text-white border-black ring-2 ring-black/10'
                 : drawerExpandMode === 'all'
@@ -1226,6 +1287,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
 
                 return (
                   <RealTimeOrderCard
+              refreshPulseKey={refreshPulseKey}
                     key={`cust-ord-${order.id || order.orderNo || idx}-${idx}`}
                     order={order}
                     idx={idx}
