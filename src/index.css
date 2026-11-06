@@ -240,29 +240,29 @@
   animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ---- [源 L1773-1798] 卡片入场上浮（hidden-down / hidden-up / visible 三态） ---- */
+/* ---- 卡片滚动自适应入场（与 Framer Motion 物理弹簧协同） ---- */
 .organic-card-reveal {
-  transform-origin: left center !important;
+  transform-origin: left center;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-.organic-card-reveal[data-reveal="hidden-down"] {
-  opacity: 0.35 !important;
-  transform: translate3d(-6px, 8px, 0) scale(0.985) !important;
-  transition: none !important;
+.organic-card-reveal[data-reveal="hidden-down"]:not([data-motion-active="true"]) {
+  opacity: 0.35;
+  transform: translate3d(-12px, 0, 0) scale(0.985);
+  transition: none;
 }
 
-.organic-card-reveal[data-reveal="hidden-up"] {
-  opacity: 0.35 !important;
-  transform: translate3d(-6px, -8px, 0) scale(0.985) !important;
-  transition: none !important;
+.organic-card-reveal[data-reveal="hidden-up"]:not([data-motion-active="true"]) {
+  opacity: 0.35;
+  transform: translate3d(-12px, 0, 0) scale(0.985);
+  transition: none;
 }
 
-.organic-card-reveal[data-reveal="visible"] {
-  opacity: 1 !important;
-  transform: translate3d(0, 0, 0) scale(1) !important;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease-out !important;
+.organic-card-reveal[data-reveal="visible"]:not([data-motion-active="true"]) {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease-out;
 }
 
 /* ---- [源 L2488-2494] Motion 令牌：duration-normal 等（本屏 duration-normal 4 处） ----
