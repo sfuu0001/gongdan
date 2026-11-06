@@ -271,7 +271,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
           ease: [0.16, 1, 0.3, 1],
           delay: Math.min(idx * 0.10, 0.5) + 0.12,
         }}
-        className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-white/60 to-transparent -skew-x-25 pointer-events-none z-30"
+        className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -skew-x-25 pointer-events-none z-30"
       />
 
       {!isExpanded ? (
@@ -302,7 +302,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
               <span
                 className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full ring-1 ring-white ${
                   isDelivered
-                    ? 'bg-neutral-600'
+                    ? 'bg-emerald-500'
                     : isRefunded
                     ? 'bg-rose-500'
                     : isEnRoute
@@ -366,7 +366,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
               }}
               className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
                 isDelivered
-                  ? 'bg-neutral-100 text-neutral-700 border-neutral-200/90'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                   : isRefunded
                   ? 'bg-rose-50 text-rose-700 border-rose-200/80'
                   : isEnRoute
@@ -392,10 +392,10 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                 }}
                 className="flex items-center gap-1 shrink-0"
               >
-                <span className="w-3.5 h-3.5 rounded-full border border-neutral-300 flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-700" />
+                <span className="w-3.5 h-3.5 rounded-full border border-emerald-300 flex items-center justify-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 </span>
-                <Check className="w-4 h-4 text-neutral-800 stroke-[2.5]" />
+                <Check className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
               </motion.div>
             ) : (
               <div className="flex items-center gap-1 shrink-0">
@@ -468,7 +468,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                   ease: [0.16, 1, 0.3, 1],
                   delay: Math.min(idx * 0.10, 0.5) + 0.10,
                 }}
-                className="text-[10px] font-semibold text-[#64748b] leading-tight"
+                className="text-[10px] font-semibold text-[#059669] leading-tight"
               >
                 {isDelivered ? '已闭环' : isDineIn ? '堂食' : isPickup ? '自提' : `${progressPct}%`}
               </motion.div>
@@ -546,7 +546,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                     <div className="py-2.5 space-y-1.5">
                       <div className="flex items-center justify-between text-[10px] text-[#787770] font-semibold">
                         <span>完整业务订单号</span>
-                        <span className="tabular-nums text-[9.5px] text-neutral-700 bg-neutral-100 px-1.5 py-0.2 rounded border border-neutral-200">
+                        <span className="tabular-nums text-[9.5px] text-[#059669] bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
                           可追溯
                         </span>
                       </div>
@@ -562,8 +562,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                         >
                           {copiedKey === 'fullOrderNo' ? (
                             <>
-                              <Check className="w-3 h-3 text-neutral-800" />
-                              <span className="text-neutral-800 text-[10px]">已复制</span>
+                              <Check className="w-3 h-3 text-emerald-600" />
+                              <span className="text-emerald-700 text-[10px]">已复制</span>
                             </>
                           ) : (
                             <>
@@ -589,7 +589,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                             className="text-[#787770] hover:text-black p-0.5 rounded cursor-pointer"
                             title="复制系统流水号"
                           >
-                            {copiedKey === 'cloudTraceId' ? <Check className="w-2.5 h-2.5 text-neutral-800" /> : <Copy className="w-2.5 h-2.5" />}
+                            {copiedKey === 'cloudTraceId' ? <Check className="w-2.5 h-2.5 text-emerald-600" /> : <Copy className="w-2.5 h-2.5" />}
                           </button>
                         </div>
                       </div>
@@ -597,7 +597,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[#787770] shrink-0 font-medium">食客 UID:</span>
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className="tabular-nums text-[10px] text-neutral-800 truncate max-w-[150px] select-all bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200">
+                          <span className="tabular-nums text-[10px] text-emerald-800 truncate max-w-[150px] select-all bg-[#edfcf6] px-1.5 py-0.5 rounded border border-[#bbf7d0]">
                             {fullUid}
                           </span>
                           <button
@@ -606,7 +606,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                             className="text-[#787770] hover:text-black p-0.5 rounded cursor-pointer"
                             title="复制完整食客 UID"
                           >
-                            {copiedKey === 'uid' ? <Check className="w-2.5 h-2.5 text-neutral-800" /> : <Copy className="w-2.5 h-2.5" />}
+                            {copiedKey === 'uid' ? <Check className="w-2.5 h-2.5 text-emerald-600" /> : <Copy className="w-2.5 h-2.5" />}
                           </button>
                         </div>
                       </div>
@@ -618,7 +618,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                             台位: {order.tableCode}桌
                           </span>
                         ) : order.pickupCode ? (
-                          <span className="tabular-nums font-bold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200">
+                          <span className="tabular-nums font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200">
                             取餐码: #{order.pickupCode}
                           </span>
                         ) : (
@@ -653,8 +653,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                       >
                         {copiedKey === 'allInfo' ? (
                           <>
-                            <Check className="w-3 h-3 text-neutral-800" />
-                            <span className="text-neutral-800">已复制全量凭证</span>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span className="text-emerald-700">已复制全量凭证</span>
                           </>
                         ) : (
                           <>
@@ -685,7 +685,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
           {/* 与非展开状态完全一致的右侧坐标轴垂直对齐按钮与信息布局 */}
           <div className="flex items-center gap-2 shrink-0">
             <span className={`relative overflow-hidden inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tabular-nums border shrink-0 ${
-              isDineIn ? 'bg-amber-50/80 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50/80 text-sky-800 border-sky-200' : 'bg-neutral-100 text-neutral-800 border-neutral-200'
+              isDineIn ? 'bg-amber-50/80 text-amber-800 border-amber-200' : isPickup ? 'bg-sky-50/80 text-sky-800 border-sky-200' : 'bg-emerald-50/80 text-emerald-800 border-emerald-200'
             }`}>
               <span>{isDineIn ? (order.tableCode ? `${order.tableCode}桌` : '堂食座席') : isPickup ? `取餐 #${order.pickupCode || cleanOrderNo.slice(-4) || '8806'}` : '雷达专送'}</span>
               {!isDineIn && !isPickup && (
@@ -725,7 +725,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
         <div className="flex items-center justify-between pb-3 border-b border-[#f2f2ee] gap-2">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 shadow-2xs border ${
-              isDineIn ? 'bg-[#fffbeb] border-[#fde68a] text-[#b45309]' : isPickup ? 'bg-[#f0f9ff] border-[#bae6fd] text-[#0369a1]' : 'bg-neutral-100 border-neutral-200 text-neutral-800'
+              isDineIn ? 'bg-[#fffbeb] border-[#fde68a] text-[#b45309]' : isPickup ? 'bg-[#f0f9ff] border-[#bae6fd] text-[#0369a1]' : 'bg-[#ecfdf5] border-[#a7f3d0] text-[#047857]'
             }`}>
               {isDineIn ? <UtensilsCrossed className="w-3.5 h-3.5" /> : isPickup ? <QrCode className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />}
             </div>
@@ -746,9 +746,9 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
             <span
               className={`inline-flex items-center gap-1.5 font-bold px-2.5 py-0.5 rounded-full text-[10.5px] shrink-0 whitespace-nowrap shadow-2xs transition duration-slow ${
                 isStatusRecentlyUpdated
-                  ? 'bg-neutral-100 text-neutral-900 border border-neutral-300 ring-2 ring-neutral-400/30 shadow-xs'
+                  ? 'bg-emerald-50 text-emerald-900 border border-emerald-300 ring-2 ring-emerald-400/50 shadow-xs'
                   : isDelivered
-                  ? 'bg-neutral-100 text-neutral-800 border border-neutral-200'
+                  ? 'bg-emerald-50/90 text-emerald-800 border border-emerald-200'
                   : isRefunded
                   ? 'bg-rose-50 text-rose-800 border border-rose-200'
                   : isEnRoute
@@ -758,17 +758,17 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
               title={isStatusRecentlyUpdated ? '订单状态刚刚更新 · 实时同步中' : undefined}
             >
               {isDelivered ? (
-                <CheckCircle2 className="w-3 h-3 text-neutral-700 shrink-0" />
+                <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
               ) : isStatusRecentlyUpdated ? (
                 <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-neutral-700 animate-pulse-dot" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500 animate-pulse-dot" />
                 </span>
               ) : (
                 <span
                   className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                     isDelivered
-                      ? 'bg-neutral-600'
+                      ? 'bg-emerald-500'
                       : isRefunded
                       ? 'bg-rose-500'
                       : isEnRoute
@@ -782,7 +782,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                 <span
                   className={`text-[9.5px] tabular-nums font-bold pl-1 border-l ${
                     isDelivered
-                      ? 'border-neutral-300 text-neutral-700'
+                      ? 'border-emerald-200/90 text-emerald-700'
                       : isEnRoute
                       ? 'border-sky-200/90 text-sky-700'
                       : 'border-amber-200/90 text-[#c2410c]'
@@ -792,7 +792,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                 </span>
               )}
               {isStatusRecentlyUpdated && (
-                <span className="text-[9px] font-black text-neutral-800 bg-neutral-200 px-1 py-0.2 rounded-full leading-none animate-pulse">
+                <span className="text-[9px] font-black text-emerald-700 bg-emerald-100/90 px-1 py-0.2 rounded-full leading-none animate-pulse">
                   刚刚更新
                 </span>
               )}
@@ -819,12 +819,12 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
               <button
                 type="button"
                 onClick={() => setIsKitchenLogOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-800 text-[10.5px] font-bold cursor-pointer hover:bg-neutral-200 hover:shadow-2xs active:scale-95 transition shrink-0"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ecfdf5] to-[#f0fdf4] border border-[#a7f3d0] text-[#047857] text-[10.5px] font-bold cursor-pointer hover:border-[#6ee7b7] hover:shadow-2xs active:scale-95 transition shrink-0"
                 title="点击打开/收起履约时序与交付日志"
               >
-                <CheckCircle2 className="w-3 h-3 text-neutral-700" />
+                <CheckCircle2 className="w-3 h-3 text-[#059669]" />
                 <span>妥投已送达</span>
-                <ChevronRight className={`w-3 h-3 text-neutral-500 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`w-3 h-3 text-[#059669]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
               </button>
             ) : isRefunded ? (
               <button
@@ -872,10 +872,10 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
           <button
             type="button"
             onClick={() => setIsKitchenLogOpen(true)}
-            className="inline-flex items-center gap-1 text-[10px] tabular-nums font-bold text-neutral-700 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-custom hover:bg-neutral-200 transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1 text-[10px] tabular-nums font-bold text-[#059669] bg-[#ecfdf5] border border-[#a7f3d0] px-2 py-0.5 rounded-custom hover:bg-[#d1fae5] transition-colors cursor-pointer shrink-0"
             title="查看完整流转时序与出餐日志"
           >
-            <Clock className="w-2.5 h-2.5 text-neutral-600" />
+            <Clock className="w-2.5 h-2.5 text-[#059669]" />
             <span>
               {isDelivered
                 ? `${order.estArrival || order.createdTime || '已送达'}`
@@ -910,7 +910,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
 
               <div className="space-y-2 text-[11px]">
                 <div className="flex items-start gap-2 text-[#40403c]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-800 mt-1 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] mt-1 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-obsidian">工单主厨确认接单</span>
@@ -974,7 +974,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
         {order.statusType === 'refunded' && (
           <div className="mt-2 p-2 bg-neutral-100 border border-neutral-200 rounded-custom text-xs space-y-0.5">
             <div className="flex items-center gap-1 text-neutral-800 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5 text-neutral-700 shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>退款已成功入账</span>
             </div>
             <p className="text-[11px] text-neutral-600">
@@ -1023,8 +1023,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
             </div>
 
             {/* 微型菜品进度胶囊 */}
-            <span className="inline-flex items-center gap-1 bg-neutral-100 border border-neutral-200 text-neutral-800 text-[10.5px] font-bold px-1.5 py-0.2 rounded-full whitespace-nowrap shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
+            <span className="inline-flex items-center gap-1 bg-[#ecfdf5] border border-[#a7f3d0] text-[#059669] text-[10.5px] font-bold px-1.5 py-0.2 rounded-full whitespace-nowrap shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
               <span>{servedCount > 0 ? `${servedCount}已上桌` : ''}{cookingCount > 0 ? ` ${cookingCount}现制` : ' 齐备'}</span>
             </span>
 
@@ -1083,7 +1083,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                             isStruck
                               ? 'bg-red-500'
                               : isServed
-                              ? 'bg-neutral-800'
+                              ? 'bg-[#059669]'
                               : isReady
                               ? 'bg-[#0284c7]'
                               : 'bg-[#ea580c] animate-pulse'
@@ -1128,7 +1128,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                               划菜原因：{dishItem.struckOffReason || '后厨沽清'}
                             </div>
                             {dishItem.compensationDetail && (
-                              <div className="text-[10px] text-neutral-800 font-bold">
+                              <div className="text-[10px] text-emerald-700 font-bold">
                                 补偿方案：{dishItem.compensationDetail}
                               </div>
                             )}
@@ -1140,7 +1140,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                             <span
                               className={
                                 isServed
-                                  ? 'text-neutral-700 font-medium'
+                                  ? 'text-[#059669] font-medium'
                                   : isReady
                                   ? 'text-[#0284c7] font-medium'
                                   : 'text-[#ea580c] font-medium'
@@ -1162,8 +1162,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                         已扣减补偿
                       </span>
                     ) : isServed ? (
-                      <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-neutral-200 shrink-0 whitespace-nowrap shadow-2xs">
-                        <Check className="w-2.5 h-2.5 text-neutral-700" />
+                      <span className="inline-flex items-center gap-1 bg-[#ecfdf5] text-[#059669] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#a7f3d0] shrink-0 whitespace-nowrap shadow-2xs">
+                        <Check className="w-2.5 h-2.5 text-[#059669]" />
                         已上桌{dishItem.serveTime ? ` ${dishItem.serveTime}` : ''}
                       </span>
                     ) : isReady ? (
@@ -1223,7 +1223,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
           ) : order.channel === 'pickup' ? (
             <QrCode className="w-3.5 h-3.5 text-sky-600 shrink-0" />
           ) : (
-            <Truck className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <Truck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           )}
           <span className="text-xs font-bold tracking-tight text-[#111111]">
             {order.channel === 'dine_in'
@@ -1248,8 +1248,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
           <MessageSquareText className="w-4 h-4 text-[#444440]" />
           <span className="text-xs font-bold hidden sm:inline">联络室</span>
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-neutral-700"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10b981]"></span>
           </span>
         </button>
 
@@ -1436,8 +1436,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                   >
                     {copiedKey === 'pickup_code' ? (
                       <>
-                        <Check className="w-2.5 h-2.5 text-neutral-800" />
-                        <span className="text-neutral-800">已复制</span>
+                        <Check className="w-2.5 h-2.5 text-emerald-600" />
+                        <span className="text-emerald-700">已复制</span>
                       </>
                     ) : (
                       <>

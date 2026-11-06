@@ -727,7 +727,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
         </div>
 
         {/* 顶部右侧：从左往右罗列堆砌动画工具组 (时序视图 / 云端刷新 / 消息通知) */}
-        <div className="flex items-center gap-1.5 p-0.5 rounded-[8px] bg-[#f9f9f9] border border-[#e8e8e5]/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center gap-1.5 p-0.5 rounded-[8px] bg-neutral-100/60 border border-[#e8e8e5]/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
           {/* 按钮 1: 履约时序流转切换按钮 (从左往右罗列堆砌: 丝滑高频渐显，delay 0s) */}
           <motion.button
             key={`brick-1-timeline-${refreshPulseKey}`}
@@ -853,9 +853,9 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             <button
               type="button"
               onClick={() => setUidScope('my_uid')}
-              className={`px-2 py-1 rounded-md text-[10.5px] font-bold transition cursor-pointer flex items-center justify-center gap-1 bg-[#f9f9f9] ${
+              className={`px-2 py-1 rounded-md text-[10.5px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
                 uidScope === 'my_uid'
-                  ? 'text-black shadow-2xs font-bold'
+                  ? 'bg-[#ededed] text-black shadow-2xs font-bold'
                   : 'text-[#6e6d66] hover:text-black'
               }`}
             >
@@ -910,7 +910,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             onFocus={() => setIsSuggestOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="输入 UID / 订单号 / 菜品 / 取餐码联想..."
-            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#f9f9f9] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
+            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#f5f5f5] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
           />
           <AnimatePresence>
             {uidSearchPrefix && (
@@ -1112,7 +1112,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-2xs transform-gpu ${
               activeTab === 'recently_delivered'
                 ? 'text-[#059669] bg-[#ecfdf5] border-2 border-[#10b981] shadow-xs'
-                : 'text-[#334155] bg-[#f9f9f9] border border-transparent hover:bg-[#e2e8f0]'
+                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
             <CheckCircle2 className={`w-3.5 h-3.5 transition-colors ${activeTab === 'recently_delivered' ? 'text-[#059669]' : 'text-[#64748b]'}`} />
@@ -1150,7 +1150,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-2xs transform-gpu ${
               activeTab === 'history'
                 ? 'text-[#d97706] bg-[#fffbeb] border-2 border-[#f59e0b] shadow-xs'
-                : 'text-[#334155] bg-[#f9f9f9] border border-transparent hover:bg-[#e2e8f0]'
+                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
             <Clock className={`w-3.5 h-3.5 transition-colors ${activeTab === 'history' ? 'text-[#d97706]' : 'text-[#64748b]'}`} />

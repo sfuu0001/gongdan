@@ -150,16 +150,16 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
         );
       case 3:
         return isDineIn ? (
-          <UtensilsCrossed className={`${iconClass} text-neutral-800`} />
+          <UtensilsCrossed className={`${iconClass} text-emerald-500`} />
         ) : isPickup ? (
-          <PackageCheck className={`${iconClass} text-neutral-800`} />
+          <PackageCheck className={`${iconClass} text-emerald-500`} />
         ) : (
-          <Bike className={`${iconClass} text-neutral-800`} />
+          <Bike className={`${iconClass} text-emerald-500`} />
         );
       case 4:
-        return <CheckCircle2 className={`${iconClass} text-neutral-800`} />;
+        return <CheckCircle2 className={`${iconClass} text-emerald-500`} />;
       default:
-        return <Check className={`${iconClass} text-neutral-800`} />;
+        return <Check className={`${iconClass} text-emerald-500`} />;
     }
   };
 
@@ -172,11 +172,11 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
       {/* 头部信息与控制栏 */}
       <div className="flex items-center justify-between px-1 mb-2 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 text-[#0f172a] font-black tracking-tight">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 animate-pulse" />
+          <span className="inline-flex items-center gap-1 text-[#059669] font-black tracking-tight">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
             <span>履约时序流转</span>
           </span>
-          <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-neutral-100 text-neutral-800 border border-neutral-200 font-bold">
+          <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-[#059669] border border-emerald-200 font-bold">
             旋转木马
           </span>
         </div>
@@ -196,7 +196,7 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
             <button
               type="button"
               onClick={handleReturnToSafeStep}
-              className="text-[9.5px] text-neutral-700 hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
+              className="text-[9.5px] text-[#059669] hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
             >
               <span>回正当前</span>
               <ChevronRight className="w-3 h-3" />
@@ -225,9 +225,9 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
         {/* 舞台背景贯穿轨道线 */}
         <div className="absolute top-[68px] left-10 right-10 h-[2px] bg-[#e5e7eb] z-0 pointer-events-none" />
 
-        {/* 已完成路段的动态连接线 (带流动光影动效) */}
+        {/* 已完成路段的翡翠色高亮动态连接线 (带流动光影动效) */}
         <div
-          className="absolute top-[68px] left-10 h-[2.5px] bg-gradient-to-r from-neutral-800 to-neutral-950 z-0 pointer-events-none transition-all duration-500 ease-out overflow-hidden"
+          className="absolute top-[68px] left-10 h-[2.5px] bg-gradient-to-r from-[#10b981] to-[#34d399] z-0 pointer-events-none transition-all duration-500 ease-out overflow-hidden"
           style={{
             width: activeIdx === 0 ? '0%' : activeIdx === 1 ? '40%' : activeIdx === 2 ? '60%' : '100%'
           }}
@@ -279,7 +279,7 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 className="group flex flex-col items-center cursor-pointer select-none"
               >
                 {/* 时间戳 */}
-                <span className="text-[10px] tabular-nums font-semibold text-neutral-700 mb-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                <span className="text-[10px] tabular-nums font-semibold text-[#059669] mb-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
                   {stepTimestamps[activeIdx - 1]}
                 </span>
 
@@ -287,7 +287,7 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 <div
                   className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 ${
                     activeIdx - 1 <= safeStep
-                      ? 'bg-neutral-900 text-white border border-neutral-800'
+                      ? 'bg-[#10b981] text-white border border-[#059669]'
                       : 'bg-white border border-[#d1d5db] text-[#888880]'
                   }`}
                 >
@@ -319,17 +319,17 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 transition={{ duration: 0.22, ease: 'easeOut' }}
                 className="flex flex-col items-center relative"
               >
-                {/* 核心光晕层 */}
-                <div className="absolute top-2 w-24 h-24 rounded-full bg-neutral-400/15 blur-xl pointer-events-none -z-10" />
+                {/* 核心光晕层 (截图呈现的扩散式翡翠光环与多重脉冲波) */}
+                <div className="absolute top-2 w-24 h-24 rounded-full bg-[#10b981]/20 blur-xl pointer-events-none -z-10" />
                 <motion.div
                   animate={{ scale: [1, 1.25, 1], opacity: [0.35, 0.1, 0.35] }}
                   transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
-                  className="absolute top-2 w-20 h-20 rounded-full bg-neutral-400/20 blur-md pointer-events-none -z-10"
+                  className="absolute top-2 w-20 h-20 rounded-full bg-[#34d399]/25 blur-md pointer-events-none -z-10"
                 />
 
                 {/* 顶部时间胶囊徽章 */}
                 <div className="mb-1.5">
-                  <span className="inline-flex items-center text-[10px] tabular-nums font-black text-neutral-800 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-full shadow-2xs">
+                  <span className="inline-flex items-center text-[10px] tabular-nums font-black text-[#059669] bg-[#ecfdf5] border border-[#a7f3d0] px-2 py-0.5 rounded-full shadow-2xs">
                     {stepTimestamps[activeIdx]}
                   </span>
                 </div>
@@ -338,16 +338,16 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 <div className="relative">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
-                    className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white border-[2.8px] border-neutral-900 shadow-[0_4px_18px_rgba(0,0,0,0.18)] flex items-center justify-center transition-transform"
+                    className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-white border-[2.8px] border-[#10b981] shadow-[0_4px_18px_rgba(16,185,129,0.32)] flex items-center justify-center transition-transform"
                   >
                     {renderIconForStep(activeIdx, true)}
                   </motion.div>
 
-                  {/* 正在进行微脉冲点 */}
+                  {/* 正在进行微脉冲点 (与截图右上角绿色卫星脉冲点精确一致) */}
                   {activeIdx === safeStep && !isDelivered && (
                     <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neutral-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-neutral-800 ring-2 ring-white shadow-xs" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#059669] ring-2 ring-white shadow-xs" />
                     </span>
                   )}
                 </div>
@@ -364,7 +364,7 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                       当前阶段
                     </span>
                   ) : activeIdx < safeStep ? (
-                    <span className="inline-flex items-center text-[9px] font-black px-1.5 py-0.2 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-800 shadow-2xs">
+                    <span className="inline-flex items-center text-[9px] font-black px-1.5 py-0.2 rounded-full bg-[#ecfdf5] border border-[#a7f3d0] text-[#059669] shadow-2xs">
                       已完成
                     </span>
                   ) : (
@@ -398,7 +398,7 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 <div
                   className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 ${
                     activeIdx + 1 <= safeStep
-                      ? 'bg-neutral-900 text-white border border-neutral-800'
+                      ? 'bg-[#10b981] text-white border border-[#059669]'
                       : 'bg-white border border-[#d1d5db] text-[#888880]'
                   }`}
                 >
@@ -432,9 +432,9 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
                 onClick={() => handleSelectStep(i)}
                 className={`transition-all duration-200 cursor-pointer rounded-full ${
                   isCur
-                    ? 'w-5 h-1.5 bg-neutral-900'
+                    ? 'w-5 h-1.5 bg-[#10b981]'
                     : isDone
-                    ? 'w-1.5 h-1.5 bg-neutral-600'
+                    ? 'w-1.5 h-1.5 bg-[#6ee7b7]'
                     : 'w-1.5 h-1.5 bg-[#d1d5db]'
                 }`}
                 title={`跳转查看：${st.label}`}

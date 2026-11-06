@@ -246,8 +246,8 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
       {/* 左右滑动探索微型状态指示胶囊 (含 10s 自动回位指示) */}
       <div className="flex items-center justify-between px-1 mb-2 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 text-[#0f172a] font-black tracking-tight">
-            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 animate-pulse" />
+          <span className="inline-flex items-center gap-1 text-[#059669] font-black tracking-tight">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
             <span>履约时序流转</span>
           </span>
           <span className="text-[#888880] text-[9.5px]">（支持左右横滑 · 视口聚焦3节点）</span>
@@ -328,7 +328,7 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
 
           {/* 动态点亮的翡翠色流转进度线 */}
           <motion.div
-            className="absolute top-[48px] h-[2.5px] bg-gradient-to-r from-neutral-800 to-neutral-950 rounded-full z-0 pointer-events-none shadow-[0_0_6px_rgba(0,0,0,0.2)]"
+            className="absolute top-[48px] h-[2.5px] bg-gradient-to-r from-[#059669] to-[#10b981] rounded-full z-0 pointer-events-none shadow-[0_0_6px_rgba(16,185,129,0.5)]"
             style={{
               left: '16.666%'
             }}
@@ -363,11 +363,11 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
                 {/* 顶部时间戳胶囊 */}
                 <div className="h-5 flex items-center justify-center mb-1">
                   {isCurrent ? (
-                    <span className="text-[10px] tabular-nums font-black text-neutral-800 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
+                    <span className="text-[10px] tabular-nums font-black text-[#059669] bg-[#ecfdf5] border border-[#a7f3d0] px-2 py-0.5 rounded-full shadow-2xs whitespace-nowrap">
                       {timeText}
                     </span>
                   ) : isCompleted ? (
-                    <span className="text-[8.5px] tabular-nums font-bold text-neutral-700 whitespace-nowrap">
+                    <span className="text-[8.5px] tabular-nums font-bold text-[#059669]/80 whitespace-nowrap">
                       {timeText}
                     </span>
                   ) : (
@@ -382,13 +382,13 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
                   {isCurrent ? (
                     <div className="relative flex items-center justify-center">
                       {/* 外层优雅的脉冲发光光圈 */}
-                      <span className="absolute -inset-1.5 rounded-full bg-neutral-400/25 animate-ping pointer-events-none" />
-                      <div className="relative w-11 h-11 rounded-full bg-gradient-to-b from-[#1c1c1a] to-[#0c0c0b] text-white flex items-center justify-center ring-2 ring-neutral-800 ring-offset-2 ring-offset-white shadow-md border border-white/15">
+                      <span className="absolute -inset-1.5 rounded-full bg-[#10b981]/25 animate-ping pointer-events-none" />
+                      <div className="relative w-11 h-11 rounded-full bg-gradient-to-b from-[#1c1c1a] to-[#0c0c0b] text-white flex items-center justify-center ring-2 ring-[#059669] ring-offset-2 ring-offset-white shadow-md border border-white/15">
                         {renderCurrentStepIcon(idx)}
                       </div>
                     </div>
                   ) : isCompleted ? (
-                    <div className="w-6 h-6 rounded-full bg-neutral-900 text-white flex items-center justify-center shadow-2xs border border-neutral-800 transition-transform group-hover:scale-110">
+                    <div className="w-6 h-6 rounded-full bg-[#059669] text-white flex items-center justify-center shadow-2xs border border-[#047857] transition-transform group-hover:scale-110">
                       <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                     </div>
                   ) : (
@@ -405,7 +405,7 @@ export const HorizontalStepsScroller: React.FC<HorizontalStepsScrollerProps> = (
                       isCurrent
                         ? 'text-[12.5px] font-black text-obsidian tracking-tight'
                         : isCompleted
-                        ? 'text-[10px] font-bold text-neutral-700'
+                        ? 'text-[10px] font-bold text-[#059669]'
                         : 'text-[10px] font-medium text-[#7c7c75] group-hover:text-black'
                     }`}
                   >
