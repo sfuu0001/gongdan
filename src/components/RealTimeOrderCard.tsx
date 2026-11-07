@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Check,
+  Package,
   PackageCheck,
   AlertCircle,
   QrCode,
@@ -28,6 +29,7 @@ import { matchDishImageUrl } from '../data/dishImages';
 import { generateQrCodeDataUrl } from '../utils/qrCode';
 import { useCardScrollReveal } from '../utils/useCardScrollReveal';
 import { RollingAmount } from './RollingAmount';
+import { StateMachineDynamicIcon } from './StateMachineDynamicIcon';
 
 export interface RealTimeOrderCardProps {
   order: any;
@@ -72,6 +74,13 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
   const [isPickupQrOpen, setIsPickupQrOpen] = useState(false);
   const [orderQrDataUrl, setOrderQrDataUrl] = useState<string | null>(null);
   const [isGeneratingOrderQr, setIsGeneratingOrderQr] = useState(false);
+
+  // 页面刷新时的激光流光层动态状态：完成后完全卸载恢复卡片原始纯净状态
+  const [isFlashVisible, setIsFlashVisible] = useState(true);
+
+  useEffect(() => {
+    setIsFlashVisible(true);
+  }, [refreshPulseKey]);
 
   const cleanOrderNo = String(order.orderNo || order.id || 'UR-DIN-9821').replace(/^#/, '');
 
@@ -209,12 +218,12 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
 
   const isDineIn = order.channel === 'dine_in';
   const isPickup = order.channel === 'pickup';
-  const isDelivered = order.statusType === 'delivered' || order.status === '已送达' || order.status === 'DELIVERED' || order.status === '已完成' || stepIndex >= 4;
+  const isDelivered = order.statusType === 'delivered' || order.status === '已送达' || order.status === 'DELIVERED' || order.status === '已完成';
   const isRefunded = order.statusType === 'refunded' || order.status === '已退款' || order.status === '已取消';
-  const isEnRoute = order.statusType === 'en_route' || order.statusType === 'delivering' || order.status === '骑手配送中' || order.status === 'DELIVERING';
+  const isEnRoute = order.statusType === 'en_route' || order.statusType === 'delivering' || order.status === 'delivering' || order.status === '骑手配送中' || order.status === 'DELIVERING' || order.status === '配送中';
 
-  const isReady = order.statusType === 'ready' || order.status === 'READY';
-  const isCooking = order.statusType === 'cooking' || order.status === 'PREPARING';
+  const isReady = order.statusType === 'ready' || order.status === 'ready' || order.status === 'READY' || order.status === '待取餐' || Boolean(order.statusText?.includes('待取餐'));
+  const isCooking = !isDelivered && !isRefunded && !isEnRoute && !isReady;
 
   const displayStatus = isRefunded
     ? '已退款'
@@ -226,7 +235,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
     ? '待取餐'
     : isCooking
     ? '现制中'
-    : order.statusConfig?.shortLabel || (order.status === 'DELIVERED' ? '已送达' : order.status) || '已接单';
+    : order.statusConfig?.shortLabel || (order.status === 'DELIVERED' ? '已送达' : order.status) || '现制中';
 
   const StatusIcon = isRefunded
     ? RotateCcw
@@ -235,10 +244,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
     : isEnRoute
     ? Truck
     : isReady
-    ? PackageCheck
-    : isCooking
-    ? Flame
-    : Clock;
+    ? Package
+    : Flame;
 
   // 「刚刚更新」微脉冲指示：原工程依赖组件内定时器/状态签名对比，
   // 独立包中由上游映射层直接下发 isRecentlyUpdated 标记，这里收敛为常量。
@@ -261,18 +268,25 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
         !isExpanded ? 'rounded-[4px]' : 'rounded-2xl'
       }`}
     >
-      {/* 缓慢向下渲染时掠过的全卡激光流光扫光层 */}
-      <motion.div
-        key={`flash-${refreshPulseKey}`}
-        initial={{ x: '-150%' }}
-        animate={{ x: '250%' }}
-        transition={{
-          duration: 0.85,
-          ease: [0.16, 1, 0.3, 1],
-          delay: Math.min(idx * 0.10, 0.5) + 0.12,
-        }}
-        className="absolute inset-0 w-32 bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent -skew-x-25 pointer-events-none z-30"
-      />
+      {/* 页面刷新/重载时掠过卡片的激光流光扫光层（动画完成后自动卸载，彻底恢复卡片原始纯净状态） */}
+      {isFlashVisible && (
+        <motion.div
+          key={`flash-${refreshPulseKey}`}
+          initial={{ left: '-50%', opacity: 0 }}
+          animate={{
+            left: '150%',
+            opacity: [0, 0.9, 0.9, 0]
+          }}
+          transition={{
+            duration: 0.85,
+            ease: [0.16, 1, 0.3, 1],
+            delay: Math.min(idx * 0.08, 0.4) + 0.08,
+            times: [0, 0.2, 0.75, 1]
+          }}
+          onAnimationComplete={() => setIsFlashVisible(false)}
+          className="absolute inset-y-0 w-36 bg-gradient-to-r from-transparent via-emerald-400/25 to-transparent -skew-x-25 pointer-events-none z-30"
+        />
+      )}
 
       {!isExpanded ? (
         /* 折叠状态 (Collapsed State): 紧凑高密度表单行，含缩略图、双行信息、状态胶囊、环形进度与右侧金额 */
@@ -364,17 +378,19 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                 ease: [0.16, 1, 0.3, 1],
                 delay: Math.min(idx * 0.10, 0.5) + 0.08,
               }}
-              className={`inline-flex items-center gap-1 text-[10.5px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
+              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${
                 isDelivered
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                  ? 'bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]'
                   : isRefunded
-                  ? 'bg-rose-50 text-rose-700 border-rose-200/80'
+                  ? 'bg-[#fef2f2] text-[#dc2626] border-[#fecaca]'
                   : isEnRoute
-                  ? 'bg-sky-50 text-sky-700 border-sky-200/80'
-                  : 'bg-amber-50 text-amber-700 border-amber-200/80'
+                  ? 'bg-[#f0f9ff] text-[#0284c7] border-[#bae6fd]'
+                  : isReady
+                  ? 'bg-[#fffdf5] text-[#b45309] border-[#fde68a]'
+                  : 'bg-[#fffdf5] text-[#b45309] border-[#fde68a]'
               }`}
             >
-              <StatusIcon className="w-3 h-3 shrink-0" />
+              <StatusIcon className="w-3.5 h-3.5 shrink-0 stroke-[1.8]" />
               <span>{displayStatus}</span>
             </motion.span>
 
@@ -748,35 +764,18 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                 isStatusRecentlyUpdated
                   ? 'bg-emerald-50 text-emerald-900 border border-emerald-300 ring-2 ring-emerald-400/50 shadow-xs'
                   : isDelivered
-                  ? 'bg-emerald-50/90 text-emerald-800 border border-emerald-200'
+                  ? 'bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]'
                   : isRefunded
-                  ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                  ? 'bg-[#fef2f2] text-[#dc2626] border-[#fecaca]'
                   : isEnRoute
-                  ? 'bg-sky-50 text-sky-800 border border-sky-200'
-                  : 'bg-[#fffaf5] text-[#ea580c] border border-[#fed7aa]'
+                  ? 'bg-[#f0f9ff] text-[#0284c7] border-[#bae6fd]'
+                  : isReady
+                  ? 'bg-[#fffdf5] text-[#b45309] border-[#fde68a]'
+                  : 'bg-[#fffdf5] text-[#b45309] border-[#fde68a]'
               }`}
               title={isStatusRecentlyUpdated ? '订单状态刚刚更新 · 实时同步中' : undefined}
             >
-              {isDelivered ? (
-                <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-              ) : isStatusRecentlyUpdated ? (
-                <span className="relative flex h-2 w-2 shrink-0 items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500 animate-pulse-dot" />
-                </span>
-              ) : (
-                <span
-                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                    isDelivered
-                      ? 'bg-emerald-500'
-                      : isRefunded
-                      ? 'bg-rose-500'
-                      : isEnRoute
-                      ? 'bg-sky-500 animate-pulse'
-                      : 'bg-[#ea580c] animate-pulse'
-                  }`}
-                />
-              )}
+              <StatusIcon className="w-3.5 h-3.5 shrink-0 stroke-[1.8]" />
               <span>{displayStatus}</span>
               {!isRefunded && (
                 <span
@@ -785,7 +784,7 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                       ? 'border-emerald-200/90 text-emerald-700'
                       : isEnRoute
                       ? 'border-sky-200/90 text-sky-700'
-                      : 'border-amber-200/90 text-[#c2410c]'
+                      : 'border-amber-200/90 text-[#b45309]'
                   }`}
                 >
                   {progressPct}%
@@ -819,10 +818,10 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
               <button
                 type="button"
                 onClick={() => setIsKitchenLogOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#ecfdf5] to-[#f0fdf4] border border-[#a7f3d0] text-[#047857] text-[10.5px] font-bold cursor-pointer hover:border-[#6ee7b7] hover:shadow-2xs active:scale-95 transition shrink-0"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ecfdf5] border border-[#a7f3d0] text-[#059669] text-[10.5px] font-bold cursor-pointer hover:border-[#6ee7b7] hover:shadow-2xs active:scale-95 transition shrink-0"
                 title="点击打开/收起履约时序与交付日志"
               >
-                <CheckCircle2 className="w-3 h-3 text-[#059669]" />
+                <CheckCircle2 className="w-3.5 h-3.5 stroke-[1.8]" />
                 <span>妥投已送达</span>
                 <ChevronRight className={`w-3 h-3 text-[#059669]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
               </button>
@@ -830,27 +829,45 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
               <button
                 type="button"
                 onClick={() => setIsKitchenLogOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#fef2f2] to-[#fff1f2] border border-[#fecaca] text-[#b91c1c] text-[10.5px] font-bold cursor-pointer hover:border-[#fca5a5] hover:shadow-2xs active:scale-95 transition shrink-0"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] text-[10.5px] font-bold cursor-pointer hover:border-rose-300 hover:shadow-2xs active:scale-95 transition shrink-0"
                 title="点击查看退单详情"
               >
-                <RotateCcw className="w-3 h-3 text-[#dc2626]" />
+                <RotateCcw className="w-3.5 h-3.5 stroke-[1.8]" />
                 <span>已退款关闭</span>
                 <ChevronRight className={`w-3 h-3 text-[#dc2626]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
+              </button>
+            ) : isReady ? (
+              <button
+                type="button"
+                onClick={() => setIsKitchenLogOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fffdf5] border border-[#fde68a] text-[#b45309] text-[10.5px] font-bold cursor-pointer hover:border-[#fcd34d] hover:shadow-2xs active:scale-95 transition shrink-0"
+                title="点击打开/收起智能保温柜出餐时序抽屉"
+              >
+                <Package className="w-3.5 h-3.5 stroke-[1.8]" />
+                <span>待取餐 · 保温中</span>
+                <ChevronRight className={`w-3 h-3 text-[#b45309]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
+              </button>
+            ) : isEnRoute ? (
+              <button
+                type="button"
+                onClick={() => setIsKitchenLogOpen((prev) => !prev)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#f0f9ff] border border-[#bae6fd] text-[#0284c7] text-[10.5px] font-bold cursor-pointer hover:border-[#7dd3fc] hover:shadow-2xs active:scale-95 transition shrink-0"
+                title="点击打开/收起专送骑手配送日志"
+              >
+                <Truck className="w-3.5 h-3.5 stroke-[1.8]" />
+                <span>骑手极速配送中</span>
+                <ChevronRight className={`w-3 h-3 text-[#0284c7]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => setIsKitchenLogOpen((prev) => !prev)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#fff7ed] to-[#fffaf5] border border-[#fed7aa] text-[#c2410c] text-[10.5px] font-bold cursor-pointer hover:border-[#fdba74] hover:shadow-2xs active:scale-95 transition shrink-0"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#fffdf5] border border-[#fde68a] text-[#b45309] text-[10.5px] font-bold cursor-pointer hover:border-[#fcd34d] hover:shadow-2xs active:scale-95 transition shrink-0"
                 title="点击打开/收起后厨调度与出餐时序抽屉"
               >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ea580c] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ea580c]"></span>
-                </span>
-                <Flame className="w-3 h-3 text-[#ea580c]" />
-                <span>炙烤现制中</span>
-                <ChevronRight className={`w-3 h-3 text-[#ea580c]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
+                <Flame className="w-3.5 h-3.5 stroke-[1.8]" />
+                <span>{order.statusConfig?.shortLabel || '炭火现制中'}</span>
+                <ChevronRight className={`w-3 h-3 text-[#b45309]/70 transition-transform duration-normal ${isKitchenLogOpen ? 'rotate-90' : ''}`} />
               </button>
             )}
 
@@ -1167,8 +1184,8 @@ export const RealTimeOrderCard: React.FC<RealTimeOrderCardProps> = ({
                         已上桌{dishItem.serveTime ? ` ${dishItem.serveTime}` : ''}
                       </span>
                     ) : isReady ? (
-                      <span className="inline-flex items-center gap-1 bg-[#f0f9ff] text-[#0369a1] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#bae6fd] shrink-0 whitespace-nowrap shadow-2xs">
-                        <PackageCheck className="w-2.5 h-2.5 text-[#0284c7]" />
+                      <span className="inline-flex items-center gap-1 bg-[#fffdf5] text-[#b45309] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#fde68a] shrink-0 whitespace-nowrap shadow-2xs">
+                        <Package className="w-2.5 h-2.5 text-[#b45309]" />
                         保温待取
                       </span>
                     ) : (

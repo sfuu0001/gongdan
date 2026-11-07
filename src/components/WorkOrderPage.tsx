@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock,
   CheckCircle2,
-  CookingPot,
   UtensilsCrossed,
   ChevronDown,
   SlidersHorizontal,
@@ -29,6 +28,7 @@ import { HorizontalStepsScroller } from './HorizontalStepsScroller';
 import { CarouselStepsScroller } from './CarouselStepsScroller';
 import { RealTimeOrderCard } from './RealTimeOrderCard';
 import { AnimatedNumber } from './AnimatedNumber';
+import { StateMachineDynamicIcon } from './StateMachineDynamicIcon';
 import { getOrderStatusConfig } from '../data/statusConfig';
 import { MOCK_ORDERS, MOCK_DELIVERED_ORDERS, MOCK_HISTORY_ORDERS, fetchOrdersFromCloudFunction } from '../data/orders';
 import type { Order, UserProfile, TabType } from '../types';
@@ -39,6 +39,31 @@ export interface WorkOrderPageProps {
   onOpenVIP?: () => void;
   onOpenMessageCenter?: (orderNo: string) => void;
   onTrackRadar?: (orderNo: string) => void;
+}
+
+/**
+ * 经典餐盖/备餐锅矢量图标 (Cloche Pot)
+ * 严格还原 media_1793980659248_a4abd969.png 基准中「进行中」Tab 图标
+ */
+export function ClochePotIcon({ className = 'w-3.5 h-3.5', size = 14 }: { className?: string; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-label="进行中餐盘图标"
+    >
+      <path d="M6.5 4C6.5 2.6 9.5 2.6 9.5 4" />
+      <line x1="2.2" y1="5.2" x2="13.8" y2="5.2" />
+      <path d="M3.2 6.5L4.1 11.6C4.2 12.3 4.8 12.8 5.5 12.8H10.5C11.2 12.8 11.8 12.3 11.9 11.6L12.8 6.5" />
+    </svg>
+  );
 }
 
 const DEFAULT_USER_PROFILE: UserProfile = {
@@ -727,7 +752,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
         </div>
 
         {/* 顶部右侧：从左往右罗列堆砌动画工具组 (时序视图 / 云端刷新 / 消息通知) */}
-        <div className="flex items-center gap-1.5 p-0.5 rounded-[8px] bg-neutral-100/60 border border-[#e8e8e5]/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+        <div className="flex items-center gap-1.5 p-0.5 rounded-[8px] bg-[#fbfbfb] border border-[#e8e8e5]/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
           {/* 按钮 1: 履约时序流转切换按钮 (从左往右罗列堆砌: 丝滑高频渐显，delay 0s) */}
           <motion.button
             key={`brick-1-timeline-${refreshPulseKey}`}
@@ -848,20 +873,32 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             </div>
           </div>
 
-          {/* Segmented Switcher with Clean Tactile Pill Style */}
-          <div className="inline-flex items-center p-0.5 bg-[#ffffff] rounded-[5px] border border-[#e5e5e1] gap-0.5 shrink-0">
+          {/* Segmented Switcher with Clean Tactile Animated Slider (分段设计动画滑块) */}
+          <div className="relative inline-flex items-center p-0.5 bg-[#f9f9f9] rounded-[6px] border border-[#e5e5e0] gap-0.5 shrink-0 select-none">
             <button
               type="button"
               onClick={() => setUidScope('my_uid')}
-              className={`px-2 py-1 rounded-md text-[10.5px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
+              className={`relative z-10 px-2 py-1 rounded-[5px] text-[10.5px] font-bold transition-colors duration-150 cursor-pointer flex items-center justify-center gap-1 ${
                 uidScope === 'my_uid'
-                  ? 'bg-[#ededed] text-black shadow-2xs font-bold'
+                  ? 'text-black font-bold'
                   : 'text-[#6e6d66] hover:text-black'
               }`}
             >
+              {uidScope === 'my_uid' && (
+                <motion.div
+                  layoutId="segmented-scope-slider"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 480,
+                    damping: 32,
+                    mass: 0.45,
+                  }}
+                  className="absolute inset-0 bg-white rounded-[5px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border border-black/5 -z-10"
+                />
+              )}
               <span>专属</span>
               <span
-                className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold transition-colors ${
                   uidScope === 'my_uid'
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-[#e2e2de] text-[#666]'
@@ -876,15 +913,27 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             <button
               type="button"
               onClick={() => setUidScope('all')}
-              className={`px-2 py-1 rounded-md text-[10.5px] font-bold transition cursor-pointer flex items-center justify-center gap-1 ${
+              className={`relative z-10 px-2 py-1 rounded-[5px] text-[10.5px] font-bold transition-colors duration-150 cursor-pointer flex items-center justify-center gap-1 ${
                 uidScope === 'all'
-                  ? 'bg-white text-black shadow-2xs font-bold'
+                  ? 'text-black font-bold'
                   : 'text-[#6e6d66] hover:text-black'
               }`}
             >
+              {uidScope === 'all' && (
+                <motion.div
+                  layoutId="segmented-scope-slider"
+                  transition={{
+                    type: 'spring',
+                    stiffness: 480,
+                    damping: 32,
+                    mass: 0.45,
+                  }}
+                  className="absolute inset-0 bg-white rounded-[5px] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border border-black/5 -z-10"
+                />
+              )}
               <span>全网</span>
               <span
-                className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold transition-colors ${
                   uidScope === 'all'
                     ? 'bg-sky-100 text-sky-800'
                     : 'bg-[#e2e2de] text-[#666]'
@@ -910,7 +959,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             onFocus={() => setIsSuggestOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="输入 UID / 订单号 / 菜品 / 取餐码联想..."
-            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#f5f5f5] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
+            className="w-full pl-6.5 pr-6 py-1 text-[11px] bg-[#fbfbfb] border border-[#e5e5e0] rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition placeholder:text-[#999990] text-[#141413] font-medium"
           />
           <AnimatePresence>
             {uidSearchPrefix && (
@@ -1077,7 +1126,7 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
                 : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
-            <CookingPot className={`w-3.5 h-3.5 transition-colors ${activeTab === 'in_progress' ? 'text-[#0284c7]' : 'text-[#64748b]'}`} />
+            <ClochePotIcon className="w-3.5 h-3.5 shrink-0" />
             <span>进行中</span>
             <motion.span
               initial={{ scale: 0, opacity: 0 }}
@@ -1112,10 +1161,10 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-2xs transform-gpu ${
               activeTab === 'recently_delivered'
                 ? 'text-[#059669] bg-[#ecfdf5] border-2 border-[#10b981] shadow-xs'
-                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
+                : 'text-[#334155] bg-[#fbfbfb] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
-            <CheckCircle2 className={`w-3.5 h-3.5 transition-colors ${activeTab === 'recently_delivered' ? 'text-[#059669]' : 'text-[#64748b]'}`} />
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0 stroke-[1.8]" />
             <span>近期送达</span>
             <motion.span
               initial={{ scale: 0, opacity: 0 }}
@@ -1150,10 +1199,10 @@ export const WorkOrderPage: React.FC<WorkOrderPageProps> = ({
             className={`relative px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0 transition-all shadow-2xs transform-gpu ${
               activeTab === 'history'
                 ? 'text-[#d97706] bg-[#fffbeb] border-2 border-[#f59e0b] shadow-xs'
-                : 'text-[#334155] bg-[#f1f5f9] border border-transparent hover:bg-[#e2e8f0]'
+                : 'text-[#334155] bg-[#fbfbfb] border border-transparent hover:bg-[#e2e8f0]'
             }`}
           >
-            <Clock className={`w-3.5 h-3.5 transition-colors ${activeTab === 'history' ? 'text-[#d97706]' : 'text-[#64748b]'}`} />
+            <Clock className="w-3.5 h-3.5 shrink-0 stroke-[1.8]" />
             <span>历史订单</span>
           </motion.button>
         </div>

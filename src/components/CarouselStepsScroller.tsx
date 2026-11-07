@@ -16,6 +16,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useToast } from '../ui/ToastProvider';
+import { StateMachineDynamicIcon } from './StateMachineDynamicIcon';
 
 export interface CarouselStepsScrollerProps {
   order: any;
@@ -130,9 +131,25 @@ export const CarouselStepsScroller: React.FC<CarouselStepsScrollerProps> = ({
     toast.info('已回正至当前履约执行阶段');
   };
 
-  // 渲染图标
+  // 渲染图标：核心激活阶段采用状态机动态图标
   const renderIconForStep = (idx: number, isCenter: boolean) => {
     const iconClass = isCenter ? 'w-6 h-6' : 'w-4 h-4';
+    if (isCenter) {
+      switch (idx) {
+        case 0:
+          return <StateMachineDynamicIcon status="pending" size={26} />;
+        case 1:
+          return <StateMachineDynamicIcon status="cooking" size={26} />;
+        case 2:
+          return <StateMachineDynamicIcon status={isDineIn || isPickup ? 'cooking' : 'ready'} size={26} />;
+        case 3:
+          return <StateMachineDynamicIcon status={isDineIn ? 'delivered' : isPickup ? 'ready' : 'delivering'} size={26} />;
+        case 4:
+          return <StateMachineDynamicIcon status="delivered" size={26} />;
+        default:
+          return <StateMachineDynamicIcon status="delivered" size={26} />;
+      }
+    }
     switch (idx) {
       case 0:
         return <ShoppingBag className={`${iconClass} text-amber-500`} />;
